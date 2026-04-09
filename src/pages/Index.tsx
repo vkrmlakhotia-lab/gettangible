@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import confetti from "canvas-confetti";
 import { arrayMove } from "@dnd-kit/sortable";
 import SplashScreen from "@/components/SplashScreen";
 import OnboardingScreens from "@/components/OnboardingScreens";
@@ -27,7 +28,7 @@ const applyFilters = (photos: Photo[], filters: Filter[]): Photo[] => {
 };
 
 const Index = () => {
-  const [appState, setAppState] = useState<"splash" | "onboarding" | "main" | "save">("splash");
+  const [appState, setAppState] = useState<"splash" | "onboarding" | "celebrate" | "main" | "save">("splash");
   const [activeTab, setActiveTab] = useState<"shortlisted" | "preview">("preview");
   const [photos, setPhotos] = useState<Photo[]>(samplePhotos);
   const [bookTitle, setBookTitle] = useState("Our Trip to Greece");
@@ -79,7 +80,49 @@ const Index = () => {
   };
 
   const handleSplashComplete = useCallback(() => setAppState("onboarding"), []);
-  const handleOnboardingComplete = useCallback(() => setAppState("main"), []);
+  const handleOnboardingComplete = useCallback(() => setAppState("celebrate"), []);
+
+  // Confetti celebration screen
+  useEffect(() => {
+    if (appState !== "celebrate") return;
+
+    // Fire confetti bursts
+    const colors = ["#f8961e", "#43aa8b", "#f9c74f", "#90be6d", "#577590"];
+    const end = Date.now() + 2000;
+
+    const frame = () => {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.6 },
+        colors,
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.6 },
+        colors,
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
+    frame();
+
+    // Big burst
+    confetti({
+      particleCount: 100,
+      spread: 100,
+      origin: { y: 0.5 },
+      colors,
+    });
+
+    const timer = setTimeout(() => setAppState("main"), 2500);
+    return () => clearTimeout(timer);
+  }, [appState]);
 
   if (appState === "splash") {
     return <SplashScreen onComplete={handleSplashComplete} />;
@@ -87,6 +130,18 @@ const Index = () => {
 
   if (appState === "onboarding") {
     return <OnboardingScreens onComplete={handleOnboardingComplete} />;
+  }
+
+  if (appState === "celebrate") {
+    return (
+      <div className="fixed inset-0 z-40 bg-background flex flex-col items-center justify-center px-8">
+        <div className="text-center space-y-3 animate-scale-in">
+          <div className="text-4xl">🎉</div>
+          <h2 className="text-xl font-semibold text-foreground">Your book is ready!</h2>
+          <p className="text-sm text-muted-foreground">We found your best photos and created a photobook.</p>
+        </div>
+      </div>
+    );
   }
 
   if (appState === "save") {
