@@ -11,9 +11,9 @@ interface CheckoutPageProps {
 }
 
 const CheckoutPage = ({ coverUrl, title, pageCount, onBack, onComplete }: CheckoutPageProps) => {
-  const [name, setName] = useState("Vik Lakhotia");
-  const [address, setAddress] = useState("12 Notting Hill Gate, London, W11 3JE");
-  const [editingAddress, setEditingAddress] = useState(false);
+  const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+  const [editingAddress, setEditingAddress] = useState(true);
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
 
