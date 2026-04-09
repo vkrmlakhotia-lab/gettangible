@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import { Camera, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { format } from "date-fns";
+import { Camera, Loader2, ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { samplePhotos } from "@/data/samplePhotos";
 
 interface OnboardingScreensProps {
