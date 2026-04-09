@@ -117,7 +117,7 @@ const buildSpread = (event: PhotoEvent): SpreadPages => {
 
 /* ── Cover: Front (right) = hero + title, Back (left) = TANGIBLE branding ── */
 
-const CoverSpread = ({ coverPhoto }: { coverPhoto?: Photo }) => (
+const CoverSpread = ({ coverPhoto, title, subtitle, onTitleChange, onSubtitleChange }: { coverPhoto?: Photo; title: string; subtitle: string; onTitleChange: (v: string) => void; onSubtitleChange: (v: string) => void }) => (
   <div className="flex flex-col items-center gap-1.5">
     <div
       className="w-full rounded-md overflow-hidden shadow-[0_8px_30px_-6px_rgba(0,0,0,0.18)] border border-border/40 bg-white"
