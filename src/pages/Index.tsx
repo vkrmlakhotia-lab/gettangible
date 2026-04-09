@@ -132,7 +132,18 @@ const Index = () => {
     return <OnboardingScreens onComplete={handleOnboardingComplete} />;
   }
 
-  if (appState === "save") {
+  if (appState === "celebrate") {
+    return (
+      <div className="fixed inset-0 z-40 bg-background flex flex-col items-center justify-center px-8">
+        <div className="text-center space-y-3 animate-scale-in">
+          <div className="text-4xl">🎉</div>
+          <h2 className="text-xl font-semibold text-foreground">Your book is ready!</h2>
+          <p className="text-sm text-muted-foreground">We found your best photos and created a photobook.</p>
+        </div>
+      </div>
+    );
+  }
+
     return <SaveBookScreen onSkip={() => setAppState("main")} coverUrl={filteredPhotos[0]?.url} title={bookTitle} subtitle={bookSubtitle} />;
   }
 
