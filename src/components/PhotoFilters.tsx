@@ -1,11 +1,5 @@
 import { Switch } from "@/components/ui/switch";
-
-interface Filter {
-  id: string;
-  label: string;
-  count: number;
-  enabled: boolean;
-}
+import { Filter } from "@/pages/Index";
 
 interface PhotoFiltersProps {
   filters: Filter[];

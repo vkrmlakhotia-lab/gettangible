@@ -1,10 +1,13 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Plus, X } from "lucide-react";
 import PhotoFilters from "./PhotoFilters";
 import { Photo } from "@/data/samplePhotos";
+import { Filter } from "@/pages/Index";
 
 interface ShortlistedPhotosProps {
   photos: Photo[];
+  filters: Filter[];
+  onToggleFilter: (id: string) => void;
   onRemove: (id: string) => void;
   onAddPhotos: () => void;
 }
@@ -14,53 +17,20 @@ const formatDate = (dateStr: string) => {
   return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 };
 
-const ShortlistedPhotos = ({ photos, onRemove, onAddPhotos }: ShortlistedPhotosProps) => {
-  const [filters, setFilters] = useState([
-    { id: "screenshots", label: "Remove screenshots", count: 0, enabled: false },
-    { id: "blurry", label: "Remove blurry photos", count: 0, enabled: false },
-    { id: "duplicates", label: "Remove near-duplicates", count: 0, enabled: false },
-    { id: "selfies", label: "Include selfies", count: 0, enabled: true },
-  ]);
-
-  // Count detections
-  const filtersWithCounts = useMemo(() => {
-    const counts: Record<string, number> = {
-      screenshots: photos.filter((p) => p.isScreenshot).length,
-      blurry: photos.filter((p) => p.isBlurry).length,
-      duplicates: photos.filter((p) => p.isDuplicate).length,
-      selfies: photos.filter((p) => p.isSelfie).length,
-    };
-    return filters.map((f) => ({ ...f, count: counts[f.id] || 0 }));
-  }, [photos, filters]);
-
-  const filteredPhotos = useMemo(() => {
-    return photos.filter((p) => {
-      if (filters.find((f) => f.id === "screenshots")?.enabled && p.isScreenshot) return false;
-      if (filters.find((f) => f.id === "blurry")?.enabled && p.isBlurry) return false;
-      if (filters.find((f) => f.id === "duplicates")?.enabled && p.isDuplicate) return false;
-      if (!filters.find((f) => f.id === "selfies")?.enabled && p.isSelfie) return false;
-      return true;
-    });
-  }, [photos, filters]);
-
-  const toggleFilter = (id: string) => {
-    setFilters((prev) => prev.map((f) => (f.id === id ? { ...f, enabled: !f.enabled } : f)));
-  };
-
-  // Group by date
+const ShortlistedPhotos = ({ photos, filters, onToggleFilter, onRemove, onAddPhotos }: ShortlistedPhotosProps) => {
   const grouped = useMemo(() => {
     const map = new Map<string, Photo[]>();
-    filteredPhotos.forEach((p) => {
+    photos.forEach((p) => {
       const existing = map.get(p.date) || [];
       existing.push(p);
       map.set(p.date, existing);
     });
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [filteredPhotos]);
+  }, [photos]);
 
   return (
     <div className="flex flex-col gap-4 pb-24">
-      <PhotoFilters filters={filtersWithCounts} onToggle={toggleFilter} />
+      <PhotoFilters filters={filters} onToggle={onToggleFilter} />
 
       {grouped.map(([date, datePhotos]) => (
         <div key={date}>
@@ -68,12 +38,7 @@ const ShortlistedPhotos = ({ photos, onRemove, onAddPhotos }: ShortlistedPhotosP
           <div className="grid grid-cols-3 gap-1.5">
             {datePhotos.map((photo) => (
               <div key={photo.id} className="relative aspect-square rounded-lg overflow-hidden group">
-                <img
-                  src={photo.url}
-                  alt=""
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
+                <img src={photo.url} alt="" className="w-full h-full object-cover" loading="lazy" />
                 <button
                   onClick={() => onRemove(photo.id)}
                   className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -86,10 +51,9 @@ const ShortlistedPhotos = ({ photos, onRemove, onAddPhotos }: ShortlistedPhotosP
         </div>
       ))}
 
-      {/* Summary + Add */}
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 flex items-center justify-between">
         <span className="text-sm text-foreground font-medium">
-          {filteredPhotos.length} photos shortlisted
+          {photos.length} photos shortlisted
         </span>
         <button
           onClick={onAddPhotos}
