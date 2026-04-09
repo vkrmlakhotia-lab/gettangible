@@ -80,43 +80,91 @@ const OnboardingScreens = ({ onComplete }: OnboardingScreensProps) => {
   }
 
   if (step === "import") {
+    const gridPhotos = samplePhotos.slice(0, 8).map((p) => p.url);
+
     return (
-      <div className="fixed inset-0 z-40 bg-black/50 flex items-end justify-center sm:items-center">
-        <div className="max-w-sm w-full bg-card rounded-t-2xl sm:rounded-2xl overflow-hidden">
-          {/* Header section */}
-          <div className="flex flex-col items-center text-center px-6 pt-8 pb-4 gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[hsl(var(--tangible-green))] to-[hsl(var(--tangible-teal))] flex items-center justify-center shadow-lg">
-              <Camera className="w-8 h-8 text-white" />
+      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-end justify-center sm:items-center">
+        <div className="max-w-sm w-full bg-card/95 backdrop-blur-xl rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl">
+          {/* Header */}
+          <div className="flex flex-col items-start text-left px-6 pt-7 pb-3 gap-3">
+            {/* Photos icon — mimics Apple Photos sunflower */}
+            <div className="relative">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[hsl(var(--tangible-orange))] via-[hsl(var(--tangible-gold))] to-[hsl(var(--tangible-green))] flex items-center justify-center shadow-md">
+                <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="12" r="3.5" />
+                  <ellipse cx="12" cy="5.5" rx="2.2" ry="3.5" />
+                  <ellipse cx="12" cy="18.5" rx="2.2" ry="3.5" />
+                  <ellipse cx="5.5" cy="12" rx="3.5" ry="2.2" />
+                  <ellipse cx="18.5" cy="12" rx="3.5" ry="2.2" />
+                  <ellipse cx="7.4" cy="7.4" rx="2.2" ry="3.5" transform="rotate(45 7.4 7.4)" />
+                  <ellipse cx="16.6" cy="16.6" rx="2.2" ry="3.5" transform="rotate(45 16.6 16.6)" />
+                  <ellipse cx="16.6" cy="7.4" rx="2.2" ry="3.5" transform="rotate(-45 16.6 7.4)" />
+                  <ellipse cx="7.4" cy="16.6" rx="2.2" ry="3.5" transform="rotate(-45 7.4 16.6)" />
+                </svg>
+              </div>
             </div>
+
             <div className="space-y-1.5">
-              <h2 className="text-base font-semibold text-foreground">
-                "Tangible" Would Like to Access Your Photos
+              <h2 className="text-base font-semibold text-foreground leading-snug">
+                "Tangible" would like full access to your Photo Library.
               </h2>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                This lets Tangible find your best photos and curate them into a photobook. Photos are analysed locally on your device.
+                This is necessary to curate your best photos into a photobook.
               </p>
             </div>
           </div>
 
-          {/* Action buttons — iOS-style stacked */}
-          <div className="border-t border-border">
+          {/* Photo grid preview */}
+          <div className="px-6 pb-3">
+            <div className="grid grid-cols-4 gap-0.5 rounded-xl overflow-hidden">
+              {gridPhotos.map((url, i) => (
+                <img
+                  key={i}
+                  src={url}
+                  alt=""
+                  className="w-full aspect-square object-cover"
+                />
+              ))}
+            </div>
+            <div className="mt-2.5 space-y-0.5">
+              <p className="text-xs font-semibold text-foreground">
+                {samplePhotos.length} Photos
+              </p>
+              <p className="text-[10px] text-muted-foreground leading-relaxed">
+                Photos may contain data associated with location, depth information, captions and audio.
+              </p>
+            </div>
+          </div>
+
+          {/* iOS-style stacked buttons */}
+          <div className="border-t border-border/60 mt-1">
             <button
               onClick={() => setStep("analyzing")}
-              className="w-full py-3.5 text-sm font-medium text-[hsl(var(--tangible-teal))] hover:bg-muted/50 transition-colors border-b border-border"
-            >
-              Allow Full Access
-            </button>
-            <button
-              onClick={() => setStep("analyzing")}
-              className="w-full py-3.5 text-sm text-[hsl(var(--tangible-teal))] hover:bg-muted/50 transition-colors border-b border-border"
+              className="w-full py-3.5 text-sm text-muted-foreground hover:bg-muted/40 transition-colors border-b border-border/60"
             >
               Limit Access…
             </button>
             <button
+              onClick={() => setStep("analyzing")}
+              className="w-full py-3.5 text-sm font-medium text-muted-foreground hover:bg-muted/40 transition-colors border-b border-border/60"
+            >
+              Allow Full Access
+            </button>
+            <button
               onClick={onComplete}
-              className="w-full py-3.5 text-sm text-muted-foreground hover:bg-muted/50 transition-colors"
+              className="w-full py-3.5 text-sm text-muted-foreground hover:bg-muted/40 transition-colors"
             >
               Don't Allow
+            </button>
+          </div>
+
+          {/* Bottom CTA */}
+          <div className="px-6 py-3">
+            <button
+              onClick={() => setStep("analyzing")}
+              className="w-full py-3 rounded-full bg-[hsl(var(--tangible-teal))] text-white font-medium text-sm hover:opacity-90 transition-opacity"
+            >
+              Allow Access to All Photos
             </button>
           </div>
         </div>
