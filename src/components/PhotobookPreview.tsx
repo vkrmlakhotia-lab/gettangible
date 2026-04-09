@@ -382,6 +382,8 @@ const SpreadWithControls = ({
 /* ── Main preview ────────────────────────────────── */
 
 const PhotobookPreview = ({ events, title, subtitle, onTitleChange, onSubtitleChange }: PhotobookPreviewProps) => {
+  // Local photo order overrides per event index
+  const [photoOrders, setPhotoOrders] = useState<Record<number, Photo[]>>({});
   const allPhotos = events.flatMap((e) => e.photos);
 
   // Track layout per spread
@@ -389,6 +391,10 @@ const PhotobookPreview = ({ events, title, subtitle, onTitleChange, onSubtitleCh
 
   // Blank pages that have been added (inserted after spread index)
   const [blankPages, setBlankPages] = useState<number[]>([]);
+
+  const getPhotosForEvent = (idx: number, event: PhotoEvent) => {
+    return photoOrders[idx] || event.photos;
+  };
 
   const getLayout = (idx: number, event: PhotoEvent) => {
     if (layouts[idx]) return layouts[idx];
@@ -401,6 +407,10 @@ const PhotobookPreview = ({ events, title, subtitle, onTitleChange, onSubtitleCh
       return { ...prev, [idx]: { ...current, [side]: layout } };
     });
   };
+
+  const handleReorderPhotos = useCallback((idx: number, newPhotos: Photo[]) => {
+    setPhotoOrders((prev) => ({ ...prev, [idx]: newPhotos }));
+  }, []);
 
   const addBlankPage = (afterIdx: number) => {
     setBlankPages((prev) => [...prev, afterIdx]);
@@ -423,18 +433,21 @@ const PhotobookPreview = ({ events, title, subtitle, onTitleChange, onSubtitleCh
         const currentPage = pageCounter;
         pageCounter += 2;
 
+        const arrangedEvent = { ...event, photos: getPhotosForEvent(i, event) };
+
         // Count blank pages inserted after this spread
         const blanksAfter = blankPages.filter((b) => b === i).length;
 
         return (
           <div key={`${event.date}-${event.location}-${i}`} className="flex flex-col gap-4">
             <SpreadWithControls
-              event={event}
+              event={arrangedEvent}
               pageNum={currentPage}
               leftLayout={layout.left}
               rightLayout={layout.right}
               onChangeLeft={(l) => setLayout(i, "left", l)}
               onChangeRight={(l) => setLayout(i, "right", l)}
+              onReorderPhotos={(photos) => handleReorderPhotos(i, photos)}
             />
 
             {/* Render blank pages */}
