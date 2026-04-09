@@ -31,7 +31,7 @@ const PhotoCarousel = () => {
   return (
     <div className="w-full flex flex-col items-center">
       {/* Book mockup */}
-      <div className="relative w-48" style={{ aspectRatio: "3/4" }}>
+      <div className="relative w-72" style={{ aspectRatio: "297/210" }}>
         {bookCovers.map((book, i) => (
           <div
             key={i}
