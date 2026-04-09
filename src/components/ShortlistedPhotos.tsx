@@ -46,7 +46,7 @@ const SortablePhoto = ({ photo, onRemove }: { photo: Photo; onRemove: (id: strin
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="relative aspect-square rounded-lg overflow-hidden group">
+    <div ref={setNodeRef} style={style} className="relative aspect-square rounded-lg overflow-hidden group transition-all duration-200">
       <div
         {...attributes}
         {...listeners}
@@ -54,10 +54,10 @@ const SortablePhoto = ({ photo, onRemove }: { photo: Photo; onRemove: (id: strin
       >
         <GripVertical className="w-3 h-3" />
       </div>
-      <img src={photo.url} alt="" className="w-full h-full object-cover" loading="lazy" />
+      <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105" loading="lazy" />
       <button
         onClick={() => onRemove(photo.id)}
-        className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+        className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-500 z-10"
       >
         <X className="w-3.5 h-3.5" />
       </button>

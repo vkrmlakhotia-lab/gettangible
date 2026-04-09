@@ -10,41 +10,55 @@ interface OnboardingScreensProps {
   onComplete: () => void;
 }
 
-/* ── Carousel of sample book covers ─────────────── */
+/* ── Book cover carousel — shows finished book mockups ─── */
 
-const carouselPhotos = samplePhotos.slice(0, 6).map((p) => p.url);
+const bookCovers = [
+  { url: samplePhotos[0]?.url, title: "Our Trip to Greece", subtitle: "April 2026" },
+  { url: samplePhotos[3]?.url, title: "Summer Memories", subtitle: "July 2025" },
+  { url: samplePhotos[5]?.url, title: "Family Weekend", subtitle: "March 2026" },
+];
 
 const PhotoCarousel = () => {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % carouselPhotos.length);
-    }, 3000);
+      setCurrent((prev) => (prev + 1) % bookCovers.length);
+    }, 3500);
     return () => clearInterval(timer);
   }, []);
 
   return (
-    <div className="w-full relative overflow-hidden rounded-2xl" style={{ aspectRatio: "3/4" }}>
-      {carouselPhotos.map((url, i) => (
-        <img
-          key={url}
-          src={url}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
-          style={{ opacity: i === current ? 1 : 0 }}
-        />
-      ))}
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
+    <div className="w-full flex flex-col items-center">
+      {/* Book mockup */}
+      <div className="relative w-48" style={{ aspectRatio: "3/4" }}>
+        {bookCovers.map((book, i) => (
+          <div
+            key={i}
+            className="absolute inset-0 rounded-xl overflow-hidden shadow-2xl border border-border/30 transition-all duration-700"
+            style={{ opacity: i === current ? 1 : 0, transform: i === current ? "scale(1)" : "scale(0.95)" }}
+          >
+            <img src={book.url} alt="" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
+            <div className="absolute bottom-4 left-4 right-4">
+              <p className="text-sm font-bold text-white tracking-wide">{book.title}</p>
+              <p className="text-[10px] text-white/70 mt-0.5">{book.subtitle}</p>
+            </div>
+            {/* Spine effect */}
+            <div className="absolute top-0 bottom-0 left-0 w-1 bg-gradient-to-r from-black/20 to-transparent" />
+          </div>
+        ))}
+        {/* Book shadow */}
+        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-40 h-4 bg-black/10 rounded-full blur-lg" />
+      </div>
       {/* Dots */}
-      <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-        {carouselPhotos.map((_, i) => (
+      <div className="flex justify-center gap-1.5 mt-5">
+        {bookCovers.map((_, i) => (
           <button
             key={i}
             onClick={() => setCurrent(i)}
-            className={`w-1.5 h-1.5 rounded-full transition-all ${
-              i === current ? "bg-white w-4" : "bg-white/50"
+            className={`h-1.5 rounded-full transition-all ${
+              i === current ? "bg-[hsl(var(--tangible-orange))] w-5" : "bg-muted-foreground/30 w-1.5"
             }`}
           />
         ))}

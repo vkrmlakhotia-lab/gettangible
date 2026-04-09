@@ -117,7 +117,7 @@ const Index = () => {
   }
 
   if (appState === "save") {
-    return <SaveBookScreen onSkip={() => setAppState("checkout")} coverUrl={filteredPhotos[0]?.url} title={bookTitle} subtitle={bookSubtitle} />;
+    return <SaveBookScreen onSkip={() => setAppState("checkout")} onBack={() => setAppState("main")} coverUrl={filteredPhotos[0]?.url} title={bookTitle} subtitle={bookSubtitle} />;
   }
 
   if (appState === "checkout") {
@@ -155,10 +155,28 @@ const Index = () => {
     );
   }
 
+  const bookPrice = 24.0;
+  const deliveryPrice = 3.99;
+  const estimatedTotal = bookPrice + deliveryPrice;
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-md mx-auto px-4 py-6">
-        <h1 className="text-lg font-semibold text-foreground text-center mb-4">Your Photobook</h1>
+        {/* Header with settings */}
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={() => setAppState("onboarding")}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+            </svg>
+          </button>
+          <h1 className="text-lg font-semibold text-foreground">Your Photobook</h1>
+          <div className="w-5" />
+        </div>
+
         <PhotoToggle activeTab={activeTab} onTabChange={setActiveTab} />
         <div className="mt-5">
           {activeTab === "shortlisted" ? (
@@ -181,11 +199,16 @@ const Index = () => {
           )}
         </div>
         <div className="sticky bottom-0 pt-3 pb-6 bg-gradient-to-t from-background via-background to-transparent">
+          {/* Price estimate */}
+          <div className="flex items-center justify-between mb-2 px-1">
+            <span className="text-xs text-muted-foreground">{totalPages} pages · Est. total</span>
+            <span className="text-sm font-semibold text-[hsl(var(--tangible-orange))]">£{estimatedTotal.toFixed(2)}</span>
+          </div>
           <button
             onClick={() => setAppState("save")}
             className="w-full py-3.5 rounded-full bg-[hsl(var(--tangible-orange))] text-white font-medium text-sm hover:opacity-90 transition-opacity"
           >
-            Continue
+            Continue — £{estimatedTotal.toFixed(2)}
           </button>
         </div>
       </div>

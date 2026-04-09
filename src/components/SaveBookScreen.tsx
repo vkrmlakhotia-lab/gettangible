@@ -3,12 +3,13 @@ import { toast } from "sonner";
 
 interface SaveBookScreenProps {
   onSkip: () => void;
+  onBack: () => void;
   coverUrl?: string;
   title?: string;
   subtitle?: string;
 }
 
-const SaveBookScreen = ({ onSkip, coverUrl, title, subtitle }: SaveBookScreenProps) => {
+const SaveBookScreen = ({ onSkip, onBack, coverUrl, title, subtitle }: SaveBookScreenProps) => {
   const handleApple = () => {
     toast("Apple sign-in coming soon");
   };
@@ -23,7 +24,7 @@ const SaveBookScreen = ({ onSkip, coverUrl, title, subtitle }: SaveBookScreenPro
         {/* Back button */}
         <div className="px-4 pt-4 pb-2">
           <button
-            onClick={onSkip}
+            onClick={onBack}
             className="flex items-center gap-0.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -57,7 +58,7 @@ const SaveBookScreen = ({ onSkip, coverUrl, title, subtitle }: SaveBookScreenPro
           </div>
 
           <p className="text-sm text-muted-foreground text-center max-w-[240px] leading-relaxed">
-            Sign in to save your progress and continue to checkout.
+            Sign in to save your progress and unlock checkout.
           </p>
         </div>
 
@@ -86,7 +87,15 @@ const SaveBookScreen = ({ onSkip, coverUrl, title, subtitle }: SaveBookScreenPro
             Continue with Google
           </button>
 
-          <p className="text-[11px] text-muted-foreground/60 text-center pt-2 leading-relaxed">
+          {/* Continue as guest */}
+          <button
+            onClick={onSkip}
+            className="w-full py-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Continue as guest →
+          </button>
+
+          <p className="text-[11px] text-muted-foreground/60 text-center pt-1 leading-relaxed">
             By continuing you agree to our{" "}
             <span className="underline cursor-pointer">Terms of Service</span>
             {" "}and{" "}
