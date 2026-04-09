@@ -2,6 +2,10 @@ import { PhotoEvent, Photo } from "@/data/samplePhotos";
 
 interface PhotobookPreviewProps {
   events: PhotoEvent[];
+  title: string;
+  subtitle: string;
+  onTitleChange: (val: string) => void;
+  onSubtitleChange: (val: string) => void;
 }
 
 const formatDate = (dateStr: string) => {
@@ -113,7 +117,7 @@ const buildSpread = (event: PhotoEvent): SpreadPages => {
 
 /* ── Cover: Front (right) = hero + title, Back (left) = TANGIBLE branding ── */
 
-const CoverSpread = ({ coverPhoto }: { coverPhoto?: Photo }) => (
+const CoverSpread = ({ coverPhoto, title, subtitle, onTitleChange, onSubtitleChange }: { coverPhoto?: Photo; title: string; subtitle: string; onTitleChange: (v: string) => void; onSubtitleChange: (v: string) => void }) => (
   <div className="flex flex-col items-center gap-1.5">
     <div
       className="w-full rounded-md overflow-hidden shadow-[0_8px_30px_-6px_rgba(0,0,0,0.18)] border border-border/40 bg-white"
@@ -134,10 +138,20 @@ const CoverSpread = ({ coverPhoto }: { coverPhoto?: Photo }) => (
           {coverPhoto && <Img src={coverPhoto.url} />}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
           <div className="absolute bottom-3 left-3 right-3">
-            <h2 className="text-sm font-bold text-white tracking-wide">
-              Our Trip to Greece
-            </h2>
-            <p className="text-[9px] text-white/70 mt-0.5">April 2026</p>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => onTitleChange(e.target.value)}
+              className="text-sm font-bold text-white tracking-wide bg-transparent border-none outline-none w-full placeholder:text-white/50"
+              placeholder="Your Photobook Title"
+            />
+            <input
+              type="text"
+              value={subtitle}
+              onChange={(e) => onSubtitleChange(e.target.value)}
+              className="text-[9px] text-white/70 mt-0.5 bg-transparent border-none outline-none w-full placeholder:text-white/40"
+              placeholder="Subtitle"
+            />
           </div>
         </div>
       </div>
@@ -185,7 +199,7 @@ const SpreadLayout = ({ event, pageNum }: { event: PhotoEvent; pageNum: number }
   );
 };
 
-const PhotobookPreview = ({ events }: PhotobookPreviewProps) => {
+const PhotobookPreview = ({ events, title, subtitle, onTitleChange, onSubtitleChange }: PhotobookPreviewProps) => {
   const allPhotos = events.flatMap((e) => e.photos);
   const totalPages = events.length * 2 + 2;
 
@@ -194,7 +208,7 @@ const PhotobookPreview = ({ events }: PhotobookPreviewProps) => {
       <span className="text-xs text-muted-foreground font-medium">
         {events.length} events · {totalPages} pages
       </span>
-      <CoverSpread coverPhoto={allPhotos[0]} />
+      <CoverSpread coverPhoto={allPhotos[0]} title={title} subtitle={subtitle} onTitleChange={onTitleChange} onSubtitleChange={onSubtitleChange} />
       {events.map((event, i) => (
         <SpreadLayout key={`${event.date}-${event.location}`} event={event} pageNum={i * 2 + 3} />
       ))}
