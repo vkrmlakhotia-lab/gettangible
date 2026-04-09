@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Plus, LayoutGrid, ArrowLeftRight, GripVertical } from "lucide-react";
+import { Plus, LayoutGrid, ArrowLeftRight, ChevronUp, ChevronDown } from "lucide-react";
 import { PhotoEvent, Photo } from "@/data/samplePhotos";
 import { cn } from "@/lib/utils";
 
@@ -22,19 +22,81 @@ const Img = ({ src }: { src: string }) => (
 
 /* ── Layout types ────────────────────────────────── */
 
-type LayoutType = "full" | "matted" | "hero-detail" | "3-portrait" | "portrait-landscape" | "2-stack" | "1top-2bottom";
+type LayoutType =
+  | "full" | "matted" | "2-stack" | "2-side"
+  | "hero-detail" | "3-portrait" | "portrait-landscape" | "1top-2bottom"
+  | "2top-1bottom" | "grid-4" | "grid-2x2" | "5-mosaic" | "grid-6";
 
-const LAYOUT_OPTIONS: { id: LayoutType; label: string; icon: string }[] = [
-  { id: "full", label: "Full bleed", icon: "▣" },
-  { id: "matted", label: "Matted", icon: "◻" },
-  { id: "2-stack", label: "2 Stack", icon: "▥" },
-  { id: "hero-detail", label: "Hero + Detail", icon: "▤" },
-  { id: "3-portrait", label: "3 Portrait", icon: "▦" },
-  { id: "portrait-landscape", label: "Portrait + 2", icon: "▧" },
-  { id: "1top-2bottom", label: "1 + 2", icon: "▩" },
+interface LayoutOption {
+  id: LayoutType;
+  label: string;
+  minPhotos: number;
+  diagram: React.ReactNode;
+}
+
+/* ── SVG layout diagrams ─────────────────────────── */
+
+const D = ({ children }: { children: React.ReactNode }) => (
+  <svg viewBox="0 0 32 24" className="w-8 h-6">{children}</svg>
+);
+const R = (props: { x: number; y: number; width: number; height: number; className?: string }) => (
+  <rect rx="1" fill="currentColor" opacity="0.25" {...props} />
+);
+
+const LAYOUT_OPTIONS: LayoutOption[] = [
+  {
+    id: "full", label: "Full", minPhotos: 1,
+    diagram: <D><R x={1} y={1} width={30} height={22} /></D>,
+  },
+  {
+    id: "matted", label: "Matted", minPhotos: 1,
+    diagram: <D><rect x={0.5} y={0.5} width={31} height={23} rx={1} fill="none" stroke="currentColor" opacity={0.2} strokeWidth={0.5} /><R x={5} y={3} width={22} height={18} /></D>,
+  },
+  {
+    id: "2-side", label: "2 Side", minPhotos: 2,
+    diagram: <D><R x={1} y={1} width={14.5} height={22} /><R x={16.5} y={1} width={14.5} height={22} /></D>,
+  },
+  {
+    id: "2-stack", label: "2 Stack", minPhotos: 2,
+    diagram: <D><R x={1} y={1} width={30} height={10.5} /><R x={1} y={12.5} width={30} height={10.5} /></D>,
+  },
+  {
+    id: "hero-detail", label: "Hero + 1", minPhotos: 2,
+    diagram: <D><R x={1} y={1} width={20} height={22} /><R x={22} y={1} width={9} height={22} /></D>,
+  },
+  {
+    id: "3-portrait", label: "3 Cols", minPhotos: 3,
+    diagram: <D><R x={1} y={1} width={9.3} height={22} /><R x={11.3} y={1} width={9.3} height={22} /><R x={21.7} y={1} width={9.3} height={22} /></D>,
+  },
+  {
+    id: "portrait-landscape", label: "1 + 2 Right", minPhotos: 3,
+    diagram: <D><R x={1} y={1} width={12} height={22} /><R x={14} y={1} width={17} height={10.5} /><R x={14} y={12.5} width={17} height={10.5} /></D>,
+  },
+  {
+    id: "1top-2bottom", label: "1 Top 2 Bot", minPhotos: 3,
+    diagram: <D><R x={1} y={1} width={30} height={10.5} /><R x={1} y={12.5} width={14.5} height={10.5} /><R x={16.5} y={12.5} width={14.5} height={10.5} /></D>,
+  },
+  {
+    id: "2top-1bottom", label: "2 Top 1 Bot", minPhotos: 3,
+    diagram: <D><R x={1} y={1} width={14.5} height={10.5} /><R x={16.5} y={1} width={14.5} height={10.5} /><R x={1} y={12.5} width={30} height={10.5} /></D>,
+  },
+  {
+    id: "grid-4", label: "Grid 4", minPhotos: 4,
+    diagram: <D><R x={1} y={1} width={14.5} height={10.5} /><R x={16.5} y={1} width={14.5} height={10.5} /><R x={1} y={12.5} width={14.5} height={10.5} /><R x={16.5} y={12.5} width={14.5} height={10.5} /></D>,
+  },
+  {
+    id: "5-mosaic", label: "Mosaic 5", minPhotos: 5,
+    diagram: <D><R x={1} y={1} width={20} height={10.5} /><R x={22} y={1} width={9} height={10.5} /><R x={1} y={12.5} width={9} height={10.5} /><R x={11} y={12.5} width={9.5} height={10.5} /><R x={21.5} y={12.5} width={9.5} height={10.5} /></D>,
+  },
+  {
+    id: "grid-6", label: "Grid 6", minPhotos: 6,
+    diagram: <D><R x={1} y={1} width={9.3} height={10.5} /><R x={11.3} y={1} width={9.3} height={10.5} /><R x={21.7} y={1} width={9.3} height={10.5} /><R x={1} y={12.5} width={9.3} height={10.5} /><R x={11.3} y={12.5} width={9.3} height={10.5} /><R x={21.7} y={12.5} width={9.3} height={10.5} /></D>,
+  },
 ];
 
 /* ── Single-page layouts ─────────────────────────── */
+
+const s = (photos: Photo[], i: number) => photos[Math.min(i, photos.length - 1)];
 
 const Page1 = ({ photos }: { photos: Photo[] }) => (
   <div className="w-full h-full"><Img src={photos[0].url} /></div>
@@ -48,45 +110,92 @@ const PageMatted = ({ photos }: { photos: Photo[] }) => (
   </div>
 );
 
+const Page2Side = ({ photos }: { photos: Photo[] }) => (
+  <div className="flex gap-[2px] h-full w-full">
+    <div className="flex-1 overflow-hidden"><Img src={s(photos, 0).url} /></div>
+    <div className="flex-1 overflow-hidden"><Img src={s(photos, 1).url} /></div>
+  </div>
+);
+
 const PageHeroDetail = ({ photos }: { photos: Photo[] }) => (
   <div className="flex gap-[2px] h-full w-full">
-    <div className="w-[63%] h-full overflow-hidden"><Img src={photos[0].url} /></div>
-    <div className="w-[37%] h-full overflow-hidden"><Img src={photos[Math.min(1, photos.length - 1)].url} /></div>
+    <div className="w-[63%] h-full overflow-hidden"><Img src={s(photos, 0).url} /></div>
+    <div className="w-[37%] h-full overflow-hidden"><Img src={s(photos, 1).url} /></div>
   </div>
 );
 
 const Page3Portraits = ({ photos }: { photos: Photo[] }) => (
   <div className="flex gap-[2px] h-full w-full">
-    {photos.slice(0, 3).map((p) => (
-      <div key={p.id} className="flex-1 h-full overflow-hidden"><Img src={p.url} /></div>
+    {[0, 1, 2].map((i) => (
+      <div key={i} className="flex-1 h-full overflow-hidden"><Img src={s(photos, i).url} /></div>
     ))}
   </div>
 );
 
 const PagePortraitAndLandscapes = ({ photos }: { photos: Photo[] }) => (
   <div className="flex gap-[2px] h-full w-full">
-    <div className="w-[40%] h-full overflow-hidden"><Img src={photos[0].url} /></div>
+    <div className="w-[40%] h-full overflow-hidden"><Img src={s(photos, 0).url} /></div>
     <div className="w-[60%] h-full flex flex-col gap-[2px]">
-      <div className="flex-1 overflow-hidden"><Img src={photos[Math.min(1, photos.length - 1)].url} /></div>
-      <div className="flex-1 overflow-hidden"><Img src={photos[Math.min(2, photos.length - 1)].url} /></div>
+      <div className="flex-1 overflow-hidden"><Img src={s(photos, 1).url} /></div>
+      <div className="flex-1 overflow-hidden"><Img src={s(photos, 2).url} /></div>
     </div>
   </div>
 );
 
 const Page2Stack = ({ photos }: { photos: Photo[] }) => (
   <div className="flex flex-col gap-[2px] h-full w-full">
-    <div className="flex-1 overflow-hidden"><Img src={photos[0].url} /></div>
-    <div className="flex-1 overflow-hidden"><Img src={photos[Math.min(1, photos.length - 1)].url} /></div>
+    <div className="flex-1 overflow-hidden"><Img src={s(photos, 0).url} /></div>
+    <div className="flex-1 overflow-hidden"><Img src={s(photos, 1).url} /></div>
   </div>
 );
 
 const Page1Top2Bottom = ({ photos }: { photos: Photo[] }) => (
   <div className="flex flex-col gap-[2px] h-full w-full">
-    <div className="flex-1 overflow-hidden"><Img src={photos[0].url} /></div>
+    <div className="flex-1 overflow-hidden"><Img src={s(photos, 0).url} /></div>
     <div className="flex-1 flex gap-[2px]">
-      <div className="flex-1 overflow-hidden"><Img src={photos[Math.min(1, photos.length - 1)].url} /></div>
-      <div className="flex-1 overflow-hidden"><Img src={photos[Math.min(2, photos.length - 1)].url} /></div>
+      <div className="flex-1 overflow-hidden"><Img src={s(photos, 1).url} /></div>
+      <div className="flex-1 overflow-hidden"><Img src={s(photos, 2).url} /></div>
     </div>
+  </div>
+);
+
+const Page2Top1Bottom = ({ photos }: { photos: Photo[] }) => (
+  <div className="flex flex-col gap-[2px] h-full w-full">
+    <div className="flex-1 flex gap-[2px]">
+      <div className="flex-1 overflow-hidden"><Img src={s(photos, 0).url} /></div>
+      <div className="flex-1 overflow-hidden"><Img src={s(photos, 1).url} /></div>
+    </div>
+    <div className="flex-1 overflow-hidden"><Img src={s(photos, 2).url} /></div>
+  </div>
+);
+
+const PageGrid4 = ({ photos }: { photos: Photo[] }) => (
+  <div className="grid grid-cols-2 grid-rows-2 gap-[2px] h-full w-full">
+    {[0, 1, 2, 3].map((i) => (
+      <div key={i} className="overflow-hidden"><Img src={s(photos, i).url} /></div>
+    ))}
+  </div>
+);
+
+const Page5Mosaic = ({ photos }: { photos: Photo[] }) => (
+  <div className="flex flex-col gap-[2px] h-full w-full">
+    <div className="flex-1 flex gap-[2px]">
+      <div className="w-[65%] overflow-hidden"><Img src={s(photos, 0).url} /></div>
+      <div className="w-[35%] overflow-hidden"><Img src={s(photos, 1).url} /></div>
+    </div>
+    <div className="flex-1 flex gap-[2px]">
+      <div className="flex-1 overflow-hidden"><Img src={s(photos, 2).url} /></div>
+      <div className="flex-1 overflow-hidden"><Img src={s(photos, 3).url} /></div>
+      <div className="flex-1 overflow-hidden"><Img src={s(photos, 4).url} /></div>
+    </div>
+  </div>
+);
+
+const PageGrid6 = ({ photos }: { photos: Photo[] }) => (
+  <div className="grid grid-cols-3 grid-rows-2 gap-[2px] h-full w-full">
+    {[0, 1, 2, 3, 4, 5].map((i) => (
+      <div key={i} className="overflow-hidden"><Img src={s(photos, i).url} /></div>
+    ))}
   </div>
 );
 
@@ -99,11 +208,17 @@ const renderPage = (layout: LayoutType, photos: Photo[]): React.ReactNode => {
   switch (layout) {
     case "full": return <Page1 photos={photos} />;
     case "matted": return <PageMatted photos={photos} />;
+    case "2-side": return <Page2Side photos={photos} />;
     case "hero-detail": return <PageHeroDetail photos={photos} />;
-    case "3-portrait": return photos.length >= 3 ? <Page3Portraits photos={photos} /> : <Page1 photos={photos} />;
-    case "portrait-landscape": return photos.length >= 3 ? <PagePortraitAndLandscapes photos={photos} /> : <Page1 photos={photos} />;
-    case "2-stack": return photos.length >= 2 ? <Page2Stack photos={photos} /> : <Page1 photos={photos} />;
-    case "1top-2bottom": return photos.length >= 3 ? <Page1Top2Bottom photos={photos} /> : <Page1 photos={photos} />;
+    case "3-portrait": return <Page3Portraits photos={photos} />;
+    case "portrait-landscape": return <PagePortraitAndLandscapes photos={photos} />;
+    case "2-stack": return <Page2Stack photos={photos} />;
+    case "1top-2bottom": return <Page1Top2Bottom photos={photos} />;
+    case "2top-1bottom": return <Page2Top1Bottom photos={photos} />;
+    case "grid-4": return <PageGrid4 photos={photos} />;
+    case "grid-2x2": return <PageGrid4 photos={photos} />;
+    case "5-mosaic": return <Page5Mosaic photos={photos} />;
+    case "grid-6": return <PageGrid6 photos={photos} />;
     default: return <Page1 photos={photos} />;
   }
 };
@@ -132,22 +247,28 @@ const LayoutPicker = ({
   onSelect: (l: LayoutType) => void;
   onClose: () => void;
 }) => (
-  <div className="absolute top-full left-0 right-0 mt-1 z-20 bg-card border border-border rounded-xl shadow-lg p-2 grid grid-cols-4 gap-1.5">
-    {LAYOUT_OPTIONS.map((opt) => (
-      <button
-        key={opt.id}
-        onClick={() => { onSelect(opt.id); onClose(); }}
-        className={cn(
-          "flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg text-center transition-colors",
-          currentLayout === opt.id
-            ? "bg-[hsl(var(--tangible-teal))]/10 text-[hsl(var(--tangible-teal))]"
-            : "hover:bg-muted/50 text-muted-foreground"
-        )}
-      >
-        <span className="text-lg leading-none">{opt.icon}</span>
-        <span className="text-[8px] leading-tight">{opt.label}</span>
-      </button>
-    ))}
+  <div className="w-full bg-card border border-border rounded-xl shadow-lg p-3">
+    <div className="flex items-center justify-between mb-2">
+      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Choose layout</span>
+      <button onClick={onClose} className="text-[10px] text-[hsl(var(--tangible-teal))] font-medium">Done</button>
+    </div>
+    <div className="grid grid-cols-4 gap-2">
+      {LAYOUT_OPTIONS.map((opt) => (
+        <button
+          key={opt.id}
+          onClick={() => { onSelect(opt.id); onClose(); }}
+          className={cn(
+            "flex flex-col items-center gap-1 py-2 px-1 rounded-lg text-center transition-colors",
+            currentLayout === opt.id
+              ? "bg-[hsl(var(--tangible-teal))]/10 text-[hsl(var(--tangible-teal))]"
+              : "hover:bg-muted/50 text-muted-foreground"
+          )}
+        >
+          {opt.diagram}
+          <span className="text-[7px] leading-tight">{opt.label}</span>
+        </button>
+      ))}
+    </div>
   </div>
 );
 
@@ -214,21 +335,14 @@ const EndSpread = () => (
 /* ── Photo arrangement strip ─────────────────────── */
 
 const PhotoArrangement = ({
-  photos,
-  onReorder,
-  onClose,
-}: {
-  photos: Photo[];
-  onReorder: (photos: Photo[]) => void;
-  onClose: () => void;
-}) => {
+  photos, onReorder, onClose,
+}: { photos: Photo[]; onReorder: (photos: Photo[]) => void; onClose: () => void }) => {
   const [selected, setSelected] = useState<number | null>(null);
 
   const handleTap = (idx: number) => {
     if (selected === null) {
       setSelected(idx);
     } else {
-      // Swap
       const newPhotos = [...photos];
       [newPhotos[selected], newPhotos[idx]] = [newPhotos[idx], newPhotos[selected]];
       onReorder(newPhotos);
@@ -243,26 +357,17 @@ const PhotoArrangement = ({
           <ArrowLeftRight className="w-3 h-3" />
           Tap two photos to swap
         </span>
-        <button onClick={onClose} className="text-[10px] text-[hsl(var(--tangible-teal))] font-medium">
-          Done
-        </button>
+        <button onClick={onClose} className="text-[10px] text-[hsl(var(--tangible-teal))] font-medium">Done</button>
       </div>
       <div className="flex gap-1.5 overflow-x-auto pb-1">
         {photos.map((p, i) => (
-          <button
-            key={p.id}
-            onClick={() => handleTap(i)}
+          <button key={p.id} onClick={() => handleTap(i)}
             className={cn(
               "relative flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all",
-              selected === i
-                ? "border-[hsl(var(--tangible-teal))] scale-105 shadow-md"
-                : "border-transparent hover:border-border"
-            )}
-          >
+              selected === i ? "border-[hsl(var(--tangible-teal))] scale-105 shadow-md" : "border-transparent hover:border-border"
+            )}>
             <img src={p.url} alt="" className="w-full h-full object-cover" />
-            <span className="absolute bottom-0.5 right-0.5 bg-black/50 text-white text-[8px] px-1 rounded">
-              {i + 1}
-            </span>
+            <span className="absolute bottom-0.5 right-0.5 bg-black/50 text-white text-[8px] px-1 rounded">{i + 1}</span>
           </button>
         ))}
       </div>
@@ -270,30 +375,24 @@ const PhotoArrangement = ({
   );
 };
 
-/* ── Spread with layout + arrange controls ───────── */
+/* ── Spread with layout + arrange + reorder controls ── */
 
 const SpreadWithControls = ({
-  event,
-  pageNum,
-  leftLayout,
-  rightLayout,
-  onChangeLeft,
-  onChangeRight,
-  onReorderPhotos,
+  event, pageNum, leftLayout, rightLayout,
+  onChangeLeft, onChangeRight, onReorderPhotos,
+  onMoveUp, onMoveDown, isFirst, isLast,
 }: {
-  event: PhotoEvent;
-  pageNum: number;
-  leftLayout: LayoutType;
-  rightLayout: LayoutType;
-  onChangeLeft: (l: LayoutType) => void;
-  onChangeRight: (l: LayoutType) => void;
+  event: PhotoEvent; pageNum: number;
+  leftLayout: LayoutType; rightLayout: LayoutType;
+  onChangeLeft: (l: LayoutType) => void; onChangeRight: (l: LayoutType) => void;
   onReorderPhotos: (photos: Photo[]) => void;
+  onMoveUp: () => void; onMoveDown: () => void;
+  isFirst: boolean; isLast: boolean;
 }) => {
   const [pickerSide, setPickerSide] = useState<"left" | "right" | null>(null);
   const [showArrange, setShowArrange] = useState(false);
   const p = event.photos;
 
-  // Split photos between left and right pages
   const half = Math.ceil(p.length / 2);
   const leftPhotos = p.slice(0, Math.max(1, half));
   const rightPhotos = p.length > 1 ? p.slice(half) : [];
@@ -305,14 +404,28 @@ const SpreadWithControls = ({
           {formatDate(event.date)}
           {event.location && <span className="text-muted-foreground font-normal"> · {event.location}</span>}
         </p>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
+          {/* Move up/down arrows */}
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={onMoveUp}
+              disabled={isFirst}
+              className={cn("p-0.5 rounded transition-colors", isFirst ? "text-muted-foreground/30 cursor-not-allowed" : "text-[hsl(var(--tangible-teal))] hover:bg-muted/50")}
+            >
+              <ChevronUp className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={onMoveDown}
+              disabled={isLast}
+              className={cn("p-0.5 rounded transition-colors", isLast ? "text-muted-foreground/30 cursor-not-allowed" : "text-[hsl(var(--tangible-teal))] hover:bg-muted/50")}
+            >
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          </div>
           {p.length > 1 && (
             <button
               onClick={() => { setShowArrange(!showArrange); setPickerSide(null); }}
-              className={cn(
-                "flex items-center gap-1 text-[10px] transition-opacity",
-                showArrange ? "text-[hsl(var(--tangible-teal))] font-medium" : "text-[hsl(var(--tangible-teal))] hover:opacity-70"
-              )}
+              className="flex items-center gap-1 text-[10px] text-[hsl(var(--tangible-teal))] hover:opacity-70 transition-opacity"
             >
               <ArrowLeftRight className="w-3 h-3" />
               Arrange
@@ -329,26 +442,15 @@ const SpreadWithControls = ({
       </div>
 
       {pickerSide && (
-        <div className="relative w-full">
-          <LayoutPicker
-            currentLayout={pickerSide === "left" ? leftLayout : rightLayout}
-            onSelect={(l) => {
-              if (pickerSide === "left") onChangeLeft(l);
-              else onChangeRight(l);
-            }}
-            onClose={() => setPickerSide(null)}
-          />
-        </div>
+        <LayoutPicker
+          currentLayout={pickerSide === "left" ? leftLayout : rightLayout}
+          onSelect={(l) => { if (pickerSide === "left") onChangeLeft(l); else onChangeRight(l); }}
+          onClose={() => setPickerSide(null)}
+        />
       )}
 
       {showArrange && (
-        <div className="w-full">
-          <PhotoArrangement
-            photos={p}
-            onReorder={onReorderPhotos}
-            onClose={() => setShowArrange(false)}
-          />
-        </div>
+        <PhotoArrangement photos={p} onReorder={onReorderPhotos} onClose={() => setShowArrange(false)} />
       )}
 
       <div
@@ -382,19 +484,16 @@ const SpreadWithControls = ({
 /* ── Main preview ────────────────────────────────── */
 
 const PhotobookPreview = ({ events, title, subtitle, onTitleChange, onSubtitleChange }: PhotobookPreviewProps) => {
-  // Local photo order overrides per event index
   const [photoOrders, setPhotoOrders] = useState<Record<number, Photo[]>>({});
+  const [layouts, setLayouts] = useState<Record<number, { left: LayoutType; right: LayoutType }>>({});
+  const [blankPages, setBlankPages] = useState<number[]>([]);
+  const [spreadOrder, setSpreadOrder] = useState<number[] | null>(null);
+
+  // Derive ordered indices
+  const orderedIndices = spreadOrder || events.map((_, i) => i);
   const allPhotos = events.flatMap((e) => e.photos);
 
-  // Track layout per spread
-  const [layouts, setLayouts] = useState<Record<number, { left: LayoutType; right: LayoutType }>>({});
-
-  // Blank pages that have been added (inserted after spread index)
-  const [blankPages, setBlankPages] = useState<number[]>([]);
-
-  const getPhotosForEvent = (idx: number, event: PhotoEvent) => {
-    return photoOrders[idx] || event.photos;
-  };
+  const getPhotosForEvent = (idx: number, event: PhotoEvent) => photoOrders[idx] || event.photos;
 
   const getLayout = (idx: number, event: PhotoEvent) => {
     if (layouts[idx]) return layouts[idx];
@@ -416,8 +515,18 @@ const PhotobookPreview = ({ events, title, subtitle, onTitleChange, onSubtitleCh
     setBlankPages((prev) => [...prev, afterIdx]);
   };
 
-  const totalPages = (events.length + blankPages.length) * 2 + 4;
+  const moveSpread = useCallback((fromPos: number, direction: "up" | "down") => {
+    setSpreadOrder((prev) => {
+      const order = prev || events.map((_, i) => i);
+      const toPos = direction === "up" ? fromPos - 1 : fromPos + 1;
+      if (toPos < 0 || toPos >= order.length) return order;
+      const newOrder = [...order];
+      [newOrder[fromPos], newOrder[toPos]] = [newOrder[toPos], newOrder[fromPos]];
+      return newOrder;
+    });
+  }, [events]);
 
+  const totalPages = (events.length + blankPages.length) * 2 + 4;
   let pageCounter = 3;
 
   return (
@@ -428,38 +537,39 @@ const PhotobookPreview = ({ events, title, subtitle, onTitleChange, onSubtitleCh
 
       <CoverSpread coverPhoto={allPhotos[0]} title={title} subtitle={subtitle} onTitleChange={onTitleChange} onSubtitleChange={onSubtitleChange} />
 
-      {events.map((event, i) => {
-        const layout = getLayout(i, event);
+      {orderedIndices.map((eventIdx, pos) => {
+        const event = events[eventIdx];
+        if (!event) return null;
+        const layout = getLayout(eventIdx, event);
         const currentPage = pageCounter;
         pageCounter += 2;
 
-        const arrangedEvent = { ...event, photos: getPhotosForEvent(i, event) };
-
-        // Count blank pages inserted after this spread
-        const blanksAfter = blankPages.filter((b) => b === i).length;
+        const arrangedEvent = { ...event, photos: getPhotosForEvent(eventIdx, event) };
+        const blanksAfter = blankPages.filter((b) => b === eventIdx).length;
 
         return (
-          <div key={`${event.date}-${event.location}-${i}`} className="flex flex-col gap-4">
+          <div key={`spread-${eventIdx}-${pos}`} className="flex flex-col gap-4">
             <SpreadWithControls
               event={arrangedEvent}
               pageNum={currentPage}
               leftLayout={layout.left}
               rightLayout={layout.right}
-              onChangeLeft={(l) => setLayout(i, "left", l)}
-              onChangeRight={(l) => setLayout(i, "right", l)}
-              onReorderPhotos={(photos) => handleReorderPhotos(i, photos)}
+              onChangeLeft={(l) => setLayout(eventIdx, "left", l)}
+              onChangeRight={(l) => setLayout(eventIdx, "right", l)}
+              onReorderPhotos={(photos) => handleReorderPhotos(eventIdx, photos)}
+              onMoveUp={() => moveSpread(pos, "up")}
+              onMoveDown={() => moveSpread(pos, "down")}
+              isFirst={pos === 0}
+              isLast={pos === orderedIndices.length - 1}
             />
 
-            {/* Render blank pages */}
             {Array.from({ length: blanksAfter }).map((_, bi) => {
               const blankPage = pageCounter;
               pageCounter += 2;
               return (
-                <div key={`blank-${i}-${bi}`} className="flex flex-col items-center gap-1.5">
-                  <div
-                    className="w-full rounded-md overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12)] border border-border/40 bg-white"
-                    style={{ aspectRatio: "297 / 105" }}
-                  >
+                <div key={`blank-${eventIdx}-${bi}`} className="flex flex-col items-center gap-1.5">
+                  <div className="w-full rounded-md overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12)] border border-border/40 bg-white"
+                    style={{ aspectRatio: "297 / 105" }}>
                     <div className="flex h-full">
                       <div className="flex-1 flex items-center justify-center bg-muted/10">
                         <span className="text-xs text-muted-foreground/40">Blank page</span>
@@ -478,9 +588,8 @@ const PhotobookPreview = ({ events, title, subtitle, onTitleChange, onSubtitleCh
               );
             })}
 
-            {/* Add page button between spreads */}
             <button
-              onClick={() => addBlankPage(i)}
+              onClick={() => addBlankPage(eventIdx)}
               className="mx-auto flex items-center gap-1.5 text-[11px] text-[hsl(var(--tangible-teal))] hover:opacity-70 transition-opacity py-1"
             >
               <Plus className="w-3.5 h-3.5" />
