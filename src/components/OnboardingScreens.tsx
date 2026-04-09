@@ -60,7 +60,7 @@ const OnboardingScreens = ({ onComplete }: OnboardingScreensProps) => {
         <div className="max-w-sm w-full flex flex-col items-center px-6 py-8 gap-5">
           <PhotoCarousel />
           <div className="space-y-1.5 text-center">
-            <h2 className="text-xl font-semibold text-foreground">Curate an album</h2>
+            <h2 className="text-xl font-semibold text-foreground">Build your album</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
               We curate your best photos into a photo album
             </p>
