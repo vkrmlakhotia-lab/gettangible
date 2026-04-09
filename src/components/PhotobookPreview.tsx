@@ -129,8 +129,6 @@ const CoverSpread = ({ coverPhoto, title, subtitle, onTitleChange, onSubtitleCha
           <span className="text-[7px] tracking-[0.3em] uppercase font-normal text-muted-foreground/30">
             Tangible
           </span>
-            Tangible
-          </span>
         </div>
         <div className="w-px bg-border/30 flex-shrink-0" />
         {/* Front cover (right) — hero photo with title overlay */}
