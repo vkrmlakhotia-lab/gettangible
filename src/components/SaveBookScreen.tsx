@@ -14,43 +14,28 @@ const SaveBookScreen = ({ onSkip }: SaveBookScreenProps) => {
     toast("Google sign-in coming soon");
   };
 
-  // Mini book cover preview using first photo
   const coverPhoto = samplePhotos[0]?.url;
 
   return (
     <div className="fixed inset-0 z-40 bg-background flex flex-col">
-      {/* Top section with visual */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pt-10 pb-4">
-        {/* Floating book mockup */}
-        <div className="relative mb-8">
-          <div className="w-36 rounded-lg overflow-hidden shadow-xl border border-border/30" style={{ aspectRatio: "3/4" }}>
-            <img
-              src={coverPhoto}
-              alt="Your photobook"
-              className="w-full h-full object-cover"
-            />
+      {/* Book preview */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6">
+        <div className="relative mb-10">
+          <div className="w-32 rounded-lg overflow-hidden shadow-xl border border-border/30" style={{ aspectRatio: "3/4" }}>
+            <img src={coverPhoto} alt="Your photobook" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-            <div className="absolute bottom-3 left-3 right-3">
-              <p className="text-[8px] font-medium text-white/90 tracking-wide uppercase">Tangible</p>
-            </div>
           </div>
-          {/* Decorative shadow beneath book */}
-          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-28 h-3 bg-black/8 rounded-full blur-md" />
+          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-24 h-3 bg-black/8 rounded-full blur-md" />
         </div>
 
-        {/* Logo + heading */}
-        <div className="w-12 h-12 rounded-2xl bg-[hsl(var(--tangible-teal))] flex items-center justify-center shadow-md mb-5">
-          <span className="text-white text-lg font-bold">T</span>
-        </div>
-
-        <h2 className="text-xl font-semibold text-foreground mb-1.5">Save your book</h2>
+        {/* Heading */}
         <p className="text-sm text-muted-foreground text-center max-w-[260px] leading-relaxed">
           Sign in to save your progress and continue to checkout.
         </p>
       </div>
 
-      {/* Bottom section with buttons */}
-      <div className="px-6 pb-8 pt-2 space-y-3">
+      {/* Auth buttons */}
+      <div className="px-6 pb-10 pt-4 space-y-3">
         <button
           onClick={handleApple}
           className="w-full py-4 rounded-2xl bg-foreground text-background font-medium text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2.5"
@@ -74,14 +59,7 @@ const SaveBookScreen = ({ onSkip }: SaveBookScreenProps) => {
           Continue with Google
         </button>
 
-        <button
-          onClick={onSkip}
-          className="w-full py-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Skip for now
-        </button>
-
-        <p className="text-[11px] text-muted-foreground/60 text-center pt-2 leading-relaxed">
+        <p className="text-[11px] text-muted-foreground/60 text-center pt-3 leading-relaxed">
           By continuing you agree to our{" "}
           <span className="underline cursor-pointer">Terms of Service</span>
           {" "}and{" "}
