@@ -1,11 +1,13 @@
 import { toast } from "sonner";
-import { samplePhotos } from "@/data/samplePhotos";
 
 interface SaveBookScreenProps {
   onSkip: () => void;
+  coverUrl?: string;
+  title?: string;
+  subtitle?: string;
 }
 
-const SaveBookScreen = ({ onSkip }: SaveBookScreenProps) => {
+const SaveBookScreen = ({ onSkip, coverUrl, title, subtitle }: SaveBookScreenProps) => {
   const handleApple = () => {
     toast("Apple sign-in coming soon");
   };
@@ -14,21 +16,33 @@ const SaveBookScreen = ({ onSkip }: SaveBookScreenProps) => {
     toast("Google sign-in coming soon");
   };
 
-  const coverPhoto = samplePhotos[0]?.url;
-
   return (
     <div className="fixed inset-0 z-40 bg-background flex flex-col">
-      {/* Book preview */}
+      {/* Book cover preview — mirrors the actual cover the user built */}
       <div className="flex-1 flex flex-col items-center justify-center px-6">
         <div className="relative mb-10">
-          <div className="w-32 rounded-lg overflow-hidden shadow-xl border border-border/30" style={{ aspectRatio: "3/4" }}>
-            <img src={coverPhoto} alt="Your photobook" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+          <div
+            className="w-36 rounded-lg overflow-hidden shadow-xl border border-border/30 bg-white"
+            style={{ aspectRatio: "3/4" }}
+          >
+            {coverUrl ? (
+              <>
+                <img src={coverUrl} alt="Your photobook cover" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                <div className="absolute bottom-3 left-3 right-3">
+                  {title && <p className="text-[10px] font-bold text-white tracking-wide leading-tight">{title}</p>}
+                  {subtitle && <p className="text-[7px] text-white/70 mt-0.5">{subtitle}</p>}
+                </div>
+              </>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-muted/20">
+                <span className="text-xs text-muted-foreground">No cover</span>
+              </div>
+            )}
           </div>
           <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-24 h-3 bg-black/8 rounded-full blur-md" />
         </div>
 
-        {/* Heading */}
         <p className="text-sm text-muted-foreground text-center max-w-[260px] leading-relaxed">
           Sign in to save your progress and continue to checkout.
         </p>
