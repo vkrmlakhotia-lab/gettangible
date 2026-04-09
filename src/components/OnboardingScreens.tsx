@@ -166,6 +166,10 @@ const OnboardingScreens = ({ onComplete }: OnboardingScreensProps) => {
     );
   }
 
+  if (step === "dates") {
+    return <DateRangeScreen onNext={() => setStep("analyzing")} onBack={() => setStep("import")} />;
+  }
+
   return <AnalyzingScreen onComplete={onComplete} />;
 };
 
