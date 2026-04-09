@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { ChevronLeft } from "lucide-react";
 import confetti from "canvas-confetti";
 import { arrayMove } from "@dnd-kit/sortable";
 import SplashScreen from "@/components/SplashScreen";
