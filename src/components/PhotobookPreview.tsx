@@ -2,6 +2,10 @@ import { PhotoEvent, Photo } from "@/data/samplePhotos";
 
 interface PhotobookPreviewProps {
   events: PhotoEvent[];
+  title: string;
+  subtitle: string;
+  onTitleChange: (val: string) => void;
+  onSubtitleChange: (val: string) => void;
 }
 
 const formatDate = (dateStr: string) => {
