@@ -162,13 +162,6 @@ const AnalyzingScreen = ({ onComplete }: { onComplete: () => void }) => {
         <p className="text-sm font-medium text-tangible-teal">
           {analyzeMessages[msgIndex]}
         </p>
-        <div className="space-y-1 text-xs text-muted-foreground/60">
-          {analyzeMessages.map((m, i) => (
-            <p key={m} className={i <= msgIndex ? "text-muted-foreground" : ""}>
-              {m}
-            </p>
-          ))}
-        </div>
       </div>
     </div>
   );
