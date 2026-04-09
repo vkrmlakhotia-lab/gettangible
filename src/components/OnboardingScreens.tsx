@@ -8,6 +8,8 @@ import { samplePhotos } from "@/data/samplePhotos";
 
 interface OnboardingScreensProps {
   onComplete: () => void;
+  initialStep?: "curate" | "import" | "dates" | "analyzing";
+  onBack?: () => void;
 }
 
 /* ── Book cover carousel — shows finished book mockups ─── */
@@ -69,8 +71,8 @@ const PhotoCarousel = () => {
 
 /* ── Onboarding flow ────────────────────────────── */
 
-const OnboardingScreens = ({ onComplete }: OnboardingScreensProps) => {
-  const [step, setStep] = useState<"curate" | "import" | "dates" | "analyzing">("curate");
+const OnboardingScreens = ({ onComplete, initialStep = "curate", onBack }: OnboardingScreensProps) => {
+  const [step, setStep] = useState<"curate" | "import" | "dates" | "analyzing">(initialStep);
 
   if (step === "curate") {
     return (
@@ -181,7 +183,7 @@ const OnboardingScreens = ({ onComplete }: OnboardingScreensProps) => {
   }
 
   if (step === "dates") {
-    return <DateRangeScreen onNext={() => setStep("analyzing")} onBack={() => setStep("import")} />;
+    return <DateRangeScreen onNext={() => setStep("analyzing")} onBack={onBack || (() => setStep("import"))} />;
   }
 
   return <AnalyzingScreen onComplete={onComplete} />;

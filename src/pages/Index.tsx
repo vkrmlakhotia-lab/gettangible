@@ -30,7 +30,7 @@ const applyFilters = (photos: Photo[], filters: Filter[]): Photo[] => {
   });
 };
 
-type AppState = "splash" | "onboarding" | "celebrate" | "main" | "save" | "checkout" | "confirmed" | "tracking";
+type AppState = "splash" | "onboarding" | "celebrate" | "main" | "save" | "checkout" | "confirmed" | "tracking" | "dates";
 
 const Index = () => {
   const [appState, setAppState] = useState<AppState>("splash");
@@ -103,6 +103,7 @@ const Index = () => {
   // Screens
   if (appState === "splash") return <SplashScreen onComplete={handleSplashComplete} />;
   if (appState === "onboarding") return <OnboardingScreens onComplete={handleOnboardingComplete} />;
+  if (appState === "dates") return <OnboardingScreens onComplete={handleOnboardingComplete} initialStep="dates" onBack={() => setAppState("main")} />;
 
   if (appState === "celebrate") {
     return (
@@ -162,16 +163,13 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-md mx-auto px-4 py-6">
-        {/* Header with settings */}
+        {/* Header with back button */}
         <div className="flex items-center justify-between mb-4">
           <button
-            onClick={() => setAppState("onboarding")}
+            onClick={() => setAppState("dates")}
             className="text-muted-foreground hover:text-foreground transition-colors"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-            </svg>
+            <ChevronLeft className="w-5 h-5" />
           </button>
           <h1 className="text-lg font-semibold text-foreground">Your Photobook</h1>
           <div className="w-5" />
