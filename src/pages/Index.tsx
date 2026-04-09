@@ -26,6 +26,7 @@ const applyFilters = (photos: Photo[], filters: Filter[]): Photo[] => {
 };
 
 const Index = () => {
+  const [appState, setAppState] = useState<"splash" | "onboarding" | "main">("splash");
   const [activeTab, setActiveTab] = useState<"shortlisted" | "preview">("shortlisted");
   const [photos, setPhotos] = useState<Photo[]>(samplePhotos);
   const [bookTitle, setBookTitle] = useState("Our Trip to Greece");
