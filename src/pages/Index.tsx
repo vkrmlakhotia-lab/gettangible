@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import confetti from "canvas-confetti";
 import { arrayMove } from "@dnd-kit/sortable";
 import SplashScreen from "@/components/SplashScreen";
 import OnboardingScreens from "@/components/OnboardingScreens";
