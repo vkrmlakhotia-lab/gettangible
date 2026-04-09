@@ -78,6 +78,17 @@ const Index = () => {
     toast("Add photos flow coming soon");
   };
 
+  const handleSplashComplete = useCallback(() => setAppState("onboarding"), []);
+  const handleOnboardingComplete = useCallback(() => setAppState("main"), []);
+
+  if (appState === "splash") {
+    return <SplashScreen onComplete={handleSplashComplete} />;
+  }
+
+  if (appState === "onboarding") {
+    return <OnboardingScreens onComplete={handleOnboardingComplete} />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-md mx-auto px-4 py-6">
