@@ -136,35 +136,25 @@ const OnboardingScreens = ({ onComplete }: OnboardingScreensProps) => {
             </div>
           </div>
 
-          {/* iOS-style stacked buttons */}
-          <div className="border-t border-border/60 mt-1">
+          {/* 3 buttons */}
+          <div className="px-6 py-4 space-y-2.5">
             <button
               onClick={() => setStep("analyzing")}
-              className="w-full py-3.5 text-sm text-muted-foreground hover:bg-muted/40 transition-colors border-b border-border/60"
-            >
-              Limit Access…
-            </button>
-            <button
-              onClick={() => setStep("analyzing")}
-              className="w-full py-3.5 text-sm font-medium text-muted-foreground hover:bg-muted/40 transition-colors border-b border-border/60"
+              className="w-full py-3.5 rounded-xl bg-[hsl(var(--tangible-teal))] text-white font-medium text-sm hover:opacity-90 transition-opacity"
             >
               Allow Full Access
             </button>
             <button
+              onClick={() => setStep("analyzing")}
+              className="w-full py-3.5 rounded-xl border border-border text-muted-foreground text-sm hover:bg-muted/40 transition-colors"
+            >
+              Limit Access…
+            </button>
+            <button
               onClick={onComplete}
-              className="w-full py-3.5 text-sm text-muted-foreground hover:bg-muted/40 transition-colors"
+              className="w-full py-3.5 rounded-xl border border-border text-muted-foreground text-sm hover:bg-muted/40 transition-colors"
             >
               Don't Allow
-            </button>
-          </div>
-
-          {/* Bottom CTA */}
-          <div className="px-6 py-3">
-            <button
-              onClick={() => setStep("analyzing")}
-              className="w-full py-3 rounded-full bg-[hsl(var(--tangible-teal))] text-white font-medium text-sm hover:opacity-90 transition-opacity"
-            >
-              Allow Access to All Photos
             </button>
           </div>
         </div>
