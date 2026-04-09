@@ -80,7 +80,49 @@ const Index = () => {
   };
 
   const handleSplashComplete = useCallback(() => setAppState("onboarding"), []);
-  const handleOnboardingComplete = useCallback(() => setAppState("main"), []);
+  const handleOnboardingComplete = useCallback(() => setAppState("celebrate"), []);
+
+  // Confetti celebration screen
+  useEffect(() => {
+    if (appState !== "celebrate") return;
+
+    // Fire confetti bursts
+    const colors = ["#f8961e", "#43aa8b", "#f9c74f", "#90be6d", "#577590"];
+    const end = Date.now() + 2000;
+
+    const frame = () => {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.6 },
+        colors,
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.6 },
+        colors,
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
+    frame();
+
+    // Big burst
+    confetti({
+      particleCount: 100,
+      spread: 100,
+      origin: { y: 0.5 },
+      colors,
+    });
+
+    const timer = setTimeout(() => setAppState("main"), 2500);
+    return () => clearTimeout(timer);
+  }, [appState]);
 
   if (appState === "splash") {
     return <SplashScreen onComplete={handleSplashComplete} />;
