@@ -1,5 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { arrayMove } from "@dnd-kit/sortable";
+import SplashScreen from "@/components/SplashScreen";
+import OnboardingScreens from "@/components/OnboardingScreens";
 import PhotoToggle from "@/components/PhotoToggle";
 import ShortlistedPhotos from "@/components/ShortlistedPhotos";
 import PhotobookPreview from "@/components/PhotobookPreview";
@@ -24,6 +26,7 @@ const applyFilters = (photos: Photo[], filters: Filter[]): Photo[] => {
 };
 
 const Index = () => {
+  const [appState, setAppState] = useState<"splash" | "onboarding" | "main">("splash");
   const [activeTab, setActiveTab] = useState<"shortlisted" | "preview">("shortlisted");
   const [photos, setPhotos] = useState<Photo[]>(samplePhotos);
   const [bookTitle, setBookTitle] = useState("Our Trip to Greece");
@@ -74,6 +77,17 @@ const Index = () => {
   const handleAddPhotos = () => {
     toast("Add photos flow coming soon");
   };
+
+  const handleSplashComplete = useCallback(() => setAppState("onboarding"), []);
+  const handleOnboardingComplete = useCallback(() => setAppState("main"), []);
+
+  if (appState === "splash") {
+    return <SplashScreen onComplete={handleSplashComplete} />;
+  }
+
+  if (appState === "onboarding") {
+    return <OnboardingScreens onComplete={handleOnboardingComplete} />;
+  }
 
   return (
     <div className="min-h-screen bg-background">
