@@ -1,4 +1,7 @@
+import { useState } from "react";
+import { Plus, LayoutGrid } from "lucide-react";
 import { PhotoEvent, Photo } from "@/data/samplePhotos";
+import { cn } from "@/lib/utils";
 
 interface PhotobookPreviewProps {
   events: PhotoEvent[];
@@ -17,6 +20,20 @@ const Img = ({ src }: { src: string }) => (
   <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />
 );
 
+/* ── Layout types ────────────────────────────────── */
+
+type LayoutType = "full" | "matted" | "hero-detail" | "3-portrait" | "portrait-landscape" | "2-stack" | "1top-2bottom";
+
+const LAYOUT_OPTIONS: { id: LayoutType; label: string; icon: string }[] = [
+  { id: "full", label: "Full bleed", icon: "▣" },
+  { id: "matted", label: "Matted", icon: "◻" },
+  { id: "2-stack", label: "2 Stack", icon: "▥" },
+  { id: "hero-detail", label: "Hero + Detail", icon: "▤" },
+  { id: "3-portrait", label: "3 Portrait", icon: "▦" },
+  { id: "portrait-landscape", label: "Portrait + 2", icon: "▧" },
+  { id: "1top-2bottom", label: "1 + 2", icon: "▩" },
+];
+
 /* ── Single-page layouts ─────────────────────────── */
 
 const Page1 = ({ photos }: { photos: Photo[] }) => (
@@ -34,7 +51,7 @@ const PageMatted = ({ photos }: { photos: Photo[] }) => (
 const PageHeroDetail = ({ photos }: { photos: Photo[] }) => (
   <div className="flex gap-[2px] h-full w-full">
     <div className="w-[63%] h-full overflow-hidden"><Img src={photos[0].url} /></div>
-    <div className="w-[37%] h-full overflow-hidden"><Img src={photos[1].url} /></div>
+    <div className="w-[37%] h-full overflow-hidden"><Img src={photos[Math.min(1, photos.length - 1)].url} /></div>
   </div>
 );
 
@@ -50,8 +67,8 @@ const PagePortraitAndLandscapes = ({ photos }: { photos: Photo[] }) => (
   <div className="flex gap-[2px] h-full w-full">
     <div className="w-[40%] h-full overflow-hidden"><Img src={photos[0].url} /></div>
     <div className="w-[60%] h-full flex flex-col gap-[2px]">
-      <div className="flex-1 overflow-hidden"><Img src={photos[1].url} /></div>
-      <div className="flex-1 overflow-hidden"><Img src={photos[2].url} /></div>
+      <div className="flex-1 overflow-hidden"><Img src={photos[Math.min(1, photos.length - 1)].url} /></div>
+      <div className="flex-1 overflow-hidden"><Img src={photos[Math.min(2, photos.length - 1)].url} /></div>
     </div>
   </div>
 );
@@ -59,7 +76,7 @@ const PagePortraitAndLandscapes = ({ photos }: { photos: Photo[] }) => (
 const Page2Stack = ({ photos }: { photos: Photo[] }) => (
   <div className="flex flex-col gap-[2px] h-full w-full">
     <div className="flex-1 overflow-hidden"><Img src={photos[0].url} /></div>
-    <div className="flex-1 overflow-hidden"><Img src={photos[1].url} /></div>
+    <div className="flex-1 overflow-hidden"><Img src={photos[Math.min(1, photos.length - 1)].url} /></div>
   </div>
 );
 
@@ -67,89 +84,99 @@ const Page1Top2Bottom = ({ photos }: { photos: Photo[] }) => (
   <div className="flex flex-col gap-[2px] h-full w-full">
     <div className="flex-1 overflow-hidden"><Img src={photos[0].url} /></div>
     <div className="flex-1 flex gap-[2px]">
-      <div className="flex-1 overflow-hidden"><Img src={photos[1].url} /></div>
-      <div className="flex-1 overflow-hidden"><Img src={photos[2].url} /></div>
+      <div className="flex-1 overflow-hidden"><Img src={photos[Math.min(1, photos.length - 1)].url} /></div>
+      <div className="flex-1 overflow-hidden"><Img src={photos[Math.min(2, photos.length - 1)].url} /></div>
     </div>
   </div>
 );
 
 const PageEmpty = () => <div className="w-full h-full bg-muted/20" />;
 
-/* ── Spread builder ──────────────────────────────── */
+/* ── Render a page by layout type ────────────────── */
 
-interface SpreadPages {
-  left: React.ReactNode;
-  right: React.ReactNode;
-  fullBleed?: boolean;
-}
-
-const buildSpread = (event: PhotoEvent): SpreadPages => {
-  const p = event.photos;
-  const count = p.length;
-
-  switch (count) {
-    case 1:
-      return { left: <Page1 photos={[p[0]]} />, right: <PageEmpty />, fullBleed: true };
-    case 2:
-      return { left: <PageMatted photos={[p[0]]} />, right: <PageMatted photos={[p[1]]} /> };
-    case 3:
-      return { left: <PagePortraitAndLandscapes photos={[p[0], p[1], p[2]]} />, right: <PageEmpty /> };
-    case 4:
-      return { left: <Page2Stack photos={[p[0], p[1]]} />, right: <Page2Stack photos={[p[2], p[3]]} /> };
-    case 5:
-      return { left: <PageHeroDetail photos={[p[0], p[1]]} />, right: <Page3Portraits photos={[p[2], p[3], p[4]]} /> };
-    default: {
-      const left = p.slice(0, 3);
-      const right = p.slice(3, 6);
-      return {
-        left: <Page1Top2Bottom photos={left} />,
-        right: right.length >= 3
-          ? <Page1Top2Bottom photos={right} />
-          : right.length === 2
-            ? <Page2Stack photos={right} />
-            : right.length === 1
-              ? <Page1 photos={right} />
-              : <PageEmpty />,
-      };
-    }
+const renderPage = (layout: LayoutType, photos: Photo[]): React.ReactNode => {
+  if (photos.length === 0) return <PageEmpty />;
+  switch (layout) {
+    case "full": return <Page1 photos={photos} />;
+    case "matted": return <PageMatted photos={photos} />;
+    case "hero-detail": return <PageHeroDetail photos={photos} />;
+    case "3-portrait": return photos.length >= 3 ? <Page3Portraits photos={photos} /> : <Page1 photos={photos} />;
+    case "portrait-landscape": return photos.length >= 3 ? <PagePortraitAndLandscapes photos={photos} /> : <Page1 photos={photos} />;
+    case "2-stack": return photos.length >= 2 ? <Page2Stack photos={photos} /> : <Page1 photos={photos} />;
+    case "1top-2bottom": return photos.length >= 3 ? <Page1Top2Bottom photos={photos} /> : <Page1 photos={photos} />;
+    default: return <Page1 photos={photos} />;
   }
 };
 
-/* ── Cover: Front (right) = hero + title, Back (left) = TANGIBLE branding ── */
+/* ── Auto-pick default layout ────────────────────── */
 
-const CoverSpread = ({ coverPhoto, title, subtitle, onTitleChange, onSubtitleChange }: { coverPhoto?: Photo; title: string; subtitle: string; onTitleChange: (v: string) => void; onSubtitleChange: (v: string) => void }) => (
+const autoLayout = (count: number): { left: LayoutType; right: LayoutType } => {
+  switch (count) {
+    case 1: return { left: "full", right: "full" };
+    case 2: return { left: "matted", right: "matted" };
+    case 3: return { left: "portrait-landscape", right: "full" };
+    case 4: return { left: "2-stack", right: "2-stack" };
+    case 5: return { left: "hero-detail", right: "3-portrait" };
+    default: return { left: "1top-2bottom", right: "1top-2bottom" };
+  }
+};
+
+/* ── Layout picker popover ───────────────────────── */
+
+const LayoutPicker = ({
+  currentLayout,
+  onSelect,
+  onClose,
+}: {
+  currentLayout: LayoutType;
+  onSelect: (l: LayoutType) => void;
+  onClose: () => void;
+}) => (
+  <div className="absolute top-full left-0 right-0 mt-1 z-20 bg-card border border-border rounded-xl shadow-lg p-2 grid grid-cols-4 gap-1.5">
+    {LAYOUT_OPTIONS.map((opt) => (
+      <button
+        key={opt.id}
+        onClick={() => { onSelect(opt.id); onClose(); }}
+        className={cn(
+          "flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg text-center transition-colors",
+          currentLayout === opt.id
+            ? "bg-[hsl(var(--tangible-teal))]/10 text-[hsl(var(--tangible-teal))]"
+            : "hover:bg-muted/50 text-muted-foreground"
+        )}
+      >
+        <span className="text-lg leading-none">{opt.icon}</span>
+        <span className="text-[8px] leading-tight">{opt.label}</span>
+      </button>
+    ))}
+  </div>
+);
+
+/* ── Cover spread ────────────────────────────────── */
+
+const CoverSpread = ({ coverPhoto, title, subtitle, onTitleChange, onSubtitleChange }: {
+  coverPhoto?: Photo; title: string; subtitle: string;
+  onTitleChange: (v: string) => void; onSubtitleChange: (v: string) => void;
+}) => (
   <div className="flex flex-col items-center gap-1.5">
     <div
       className="w-full rounded-md overflow-hidden shadow-[0_8px_30px_-6px_rgba(0,0,0,0.18)] border border-border/40 bg-white"
       style={{ aspectRatio: "297 / 105" }}
     >
       <div className="flex h-full">
-        {/* Back cover (left) — white with TANGIBLE */}
         <div className="flex-1 flex items-center justify-center bg-white">
-          <span className="text-[7px] tracking-[0.3em] uppercase font-normal text-muted-foreground/30">
-            Tangible
-          </span>
+          <span className="text-[7px] tracking-[0.3em] uppercase font-normal text-muted-foreground/30">Tangible</span>
         </div>
         <div className="w-px bg-border/30 flex-shrink-0" />
-        {/* Front cover (right) — hero photo with title overlay */}
         <div className="flex-1 overflow-hidden relative">
           {coverPhoto && <Img src={coverPhoto.url} />}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
           <div className="absolute bottom-3 left-3 right-3">
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => onTitleChange(e.target.value)}
+            <input type="text" value={title} onChange={(e) => onTitleChange(e.target.value)}
               className="text-sm font-bold text-white tracking-wide bg-transparent border-none outline-none w-full placeholder:text-white/50"
-              placeholder="Your Photobook Title"
-            />
-            <input
-              type="text"
-              value={subtitle}
-              onChange={(e) => onSubtitleChange(e.target.value)}
+              placeholder="Your Photobook Title" />
+            <input type="text" value={subtitle} onChange={(e) => onSubtitleChange(e.target.value)}
               className="text-[9px] text-white/70 mt-0.5 bg-transparent border-none outline-none w-full placeholder:text-white/40"
-              placeholder="Subtitle"
-            />
+              placeholder="Subtitle" />
           </div>
         </div>
       </div>
@@ -161,43 +188,7 @@ const CoverSpread = ({ coverPhoto, title, subtitle, onTitleChange, onSubtitleCha
   </div>
 );
 
-/* ── Spread component ────────────────────────────── */
-
-const SpreadLayout = ({ event, pageNum }: { event: PhotoEvent; pageNum: number }) => {
-  const { left, right, fullBleed } = buildSpread(event);
-  const padding = fullBleed ? "" : "p-1.5";
-
-  return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className="w-full px-1">
-        <p className="text-[10px] font-semibold text-foreground/60 tracking-wide">
-          {formatDate(event.date)}
-          {event.location && <span className="text-muted-foreground font-normal"> · {event.location}</span>}
-        </p>
-      </div>
-      <div
-        className="w-full rounded-md overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12)] border border-border/40 bg-white"
-        style={{ aspectRatio: "297 / 105" }}
-      >
-        <div className="flex h-full">
-          <div className={`flex-1 overflow-hidden ${padding}`}>
-            <div className="w-full h-full rounded-sm overflow-hidden">{left}</div>
-          </div>
-          <div className="w-px bg-border/30 flex-shrink-0" />
-          <div className={`flex-1 overflow-hidden ${padding}`}>
-            <div className="w-full h-full rounded-sm overflow-hidden">{right}</div>
-          </div>
-        </div>
-      </div>
-      <div className="flex justify-between w-full px-1">
-        <span className="text-[10px] text-muted-foreground">{pageNum}</span>
-        <span className="text-[10px] text-muted-foreground">{pageNum + 1}</span>
-      </div>
-    </div>
-  );
-};
-
-/* ── End spread ───────────────────────────────────── */
+/* ── End spread ──────────────────────────────────── */
 
 const EndSpread = () => (
   <div className="flex flex-col items-center gap-1.5">
@@ -207,9 +198,7 @@ const EndSpread = () => (
     >
       <div className="flex h-full">
         <div className="flex-1 flex items-end justify-center bg-white pb-4">
-          <span className="text-[6px] tracking-[0.3em] uppercase font-normal text-muted-foreground/25">
-            Made with Tangible
-          </span>
+          <span className="text-[6px] tracking-[0.3em] uppercase font-normal text-muted-foreground/25">Made with Tangible</span>
         </div>
         <div className="w-px bg-border/30 flex-shrink-0" />
         <div className="flex-1 bg-white" />
@@ -222,19 +211,186 @@ const EndSpread = () => (
   </div>
 );
 
+/* ── Spread with layout controls ─────────────────── */
+
+const SpreadWithControls = ({
+  event,
+  pageNum,
+  leftLayout,
+  rightLayout,
+  onChangeLeft,
+  onChangeRight,
+}: {
+  event: PhotoEvent;
+  pageNum: number;
+  leftLayout: LayoutType;
+  rightLayout: LayoutType;
+  onChangeLeft: (l: LayoutType) => void;
+  onChangeRight: (l: LayoutType) => void;
+}) => {
+  const [pickerSide, setPickerSide] = useState<"left" | "right" | null>(null);
+  const p = event.photos;
+
+  // Split photos between left and right pages
+  const half = Math.ceil(p.length / 2);
+  const leftPhotos = p.slice(0, Math.max(1, half));
+  const rightPhotos = p.length > 1 ? p.slice(half) : [];
+
+  return (
+    <div className="flex flex-col items-center gap-1.5 relative">
+      <div className="w-full px-1 flex items-center justify-between">
+        <p className="text-[10px] font-semibold text-foreground/60 tracking-wide">
+          {formatDate(event.date)}
+          {event.location && <span className="text-muted-foreground font-normal"> · {event.location}</span>}
+        </p>
+        <button
+          onClick={() => setPickerSide(pickerSide ? null : "left")}
+          className="flex items-center gap-1 text-[10px] text-[hsl(var(--tangible-teal))] hover:opacity-70 transition-opacity"
+        >
+          <LayoutGrid className="w-3 h-3" />
+          Layout
+        </button>
+      </div>
+
+      {pickerSide && (
+        <div className="relative w-full">
+          <LayoutPicker
+            currentLayout={pickerSide === "left" ? leftLayout : rightLayout}
+            onSelect={(l) => {
+              if (pickerSide === "left") onChangeLeft(l);
+              else onChangeRight(l);
+            }}
+            onClose={() => setPickerSide(null)}
+          />
+        </div>
+      )}
+
+      <div
+        className="w-full rounded-md overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12)] border border-border/40 bg-white"
+        style={{ aspectRatio: "297 / 105" }}
+      >
+        <div className="flex h-full">
+          <div
+            className="flex-1 overflow-hidden cursor-pointer hover:ring-2 hover:ring-[hsl(var(--tangible-teal))]/30 hover:ring-inset transition-shadow"
+            onClick={() => setPickerSide(pickerSide === "left" ? null : "left")}
+          >
+            <div className="w-full h-full">{renderPage(leftLayout, leftPhotos)}</div>
+          </div>
+          <div className="w-px bg-border/30 flex-shrink-0" />
+          <div
+            className="flex-1 overflow-hidden cursor-pointer hover:ring-2 hover:ring-[hsl(var(--tangible-teal))]/30 hover:ring-inset transition-shadow"
+            onClick={() => setPickerSide(pickerSide === "right" ? null : "right")}
+          >
+            <div className="w-full h-full">{rightPhotos.length > 0 ? renderPage(rightLayout, rightPhotos) : <PageEmpty />}</div>
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-between w-full px-1">
+        <span className="text-[10px] text-muted-foreground">{pageNum}</span>
+        <span className="text-[10px] text-muted-foreground">{pageNum + 1}</span>
+      </div>
+    </div>
+  );
+};
+
+/* ── Main preview ────────────────────────────────── */
+
 const PhotobookPreview = ({ events, title, subtitle, onTitleChange, onSubtitleChange }: PhotobookPreviewProps) => {
   const allPhotos = events.flatMap((e) => e.photos);
-  const totalPages = events.length * 2 + 4;
+
+  // Track layout per spread
+  const [layouts, setLayouts] = useState<Record<number, { left: LayoutType; right: LayoutType }>>({});
+
+  // Blank pages that have been added (inserted after spread index)
+  const [blankPages, setBlankPages] = useState<number[]>([]);
+
+  const getLayout = (idx: number, event: PhotoEvent) => {
+    if (layouts[idx]) return layouts[idx];
+    return autoLayout(event.photos.length);
+  };
+
+  const setLayout = (idx: number, side: "left" | "right", layout: LayoutType) => {
+    setLayouts((prev) => {
+      const current = prev[idx] || autoLayout(events[idx]?.photos.length || 1);
+      return { ...prev, [idx]: { ...current, [side]: layout } };
+    });
+  };
+
+  const addBlankPage = (afterIdx: number) => {
+    setBlankPages((prev) => [...prev, afterIdx]);
+  };
+
+  const totalPages = (events.length + blankPages.length) * 2 + 4;
+
+  let pageCounter = 3;
 
   return (
     <div className="flex flex-col gap-6 pb-8">
       <span className="text-xs text-muted-foreground font-medium">
         {events.length} events · {totalPages} pages
       </span>
+
       <CoverSpread coverPhoto={allPhotos[0]} title={title} subtitle={subtitle} onTitleChange={onTitleChange} onSubtitleChange={onSubtitleChange} />
-      {events.map((event, i) => (
-        <SpreadLayout key={`${event.date}-${event.location}`} event={event} pageNum={i * 2 + 3} />
-      ))}
+
+      {events.map((event, i) => {
+        const layout = getLayout(i, event);
+        const currentPage = pageCounter;
+        pageCounter += 2;
+
+        // Count blank pages inserted after this spread
+        const blanksAfter = blankPages.filter((b) => b === i).length;
+
+        return (
+          <div key={`${event.date}-${event.location}-${i}`} className="flex flex-col gap-4">
+            <SpreadWithControls
+              event={event}
+              pageNum={currentPage}
+              leftLayout={layout.left}
+              rightLayout={layout.right}
+              onChangeLeft={(l) => setLayout(i, "left", l)}
+              onChangeRight={(l) => setLayout(i, "right", l)}
+            />
+
+            {/* Render blank pages */}
+            {Array.from({ length: blanksAfter }).map((_, bi) => {
+              const blankPage = pageCounter;
+              pageCounter += 2;
+              return (
+                <div key={`blank-${i}-${bi}`} className="flex flex-col items-center gap-1.5">
+                  <div
+                    className="w-full rounded-md overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12)] border border-border/40 bg-white"
+                    style={{ aspectRatio: "297 / 105" }}
+                  >
+                    <div className="flex h-full">
+                      <div className="flex-1 flex items-center justify-center bg-muted/10">
+                        <span className="text-xs text-muted-foreground/40">Blank page</span>
+                      </div>
+                      <div className="w-px bg-border/30 flex-shrink-0" />
+                      <div className="flex-1 flex items-center justify-center bg-muted/10">
+                        <span className="text-xs text-muted-foreground/40">Blank page</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between w-full px-1">
+                    <span className="text-[10px] text-muted-foreground">{blankPage}</span>
+                    <span className="text-[10px] text-muted-foreground">{blankPage + 1}</span>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Add page button between spreads */}
+            <button
+              onClick={() => addBlankPage(i)}
+              className="mx-auto flex items-center gap-1.5 text-[11px] text-[hsl(var(--tangible-teal))] hover:opacity-70 transition-opacity py-1"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add pages
+            </button>
+          </div>
+        );
+      })}
+
       <EndSpread />
     </div>
   );
