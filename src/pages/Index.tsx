@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { arrayMove } from "@dnd-kit/sortable";
 import SplashScreen from "@/components/SplashScreen";
 import OnboardingScreens from "@/components/OnboardingScreens";
+import SaveBookScreen from "@/components/SaveBookScreen";
 import PhotoToggle from "@/components/PhotoToggle";
 import ShortlistedPhotos from "@/components/ShortlistedPhotos";
 import PhotobookPreview from "@/components/PhotobookPreview";
@@ -26,7 +27,7 @@ const applyFilters = (photos: Photo[], filters: Filter[]): Photo[] => {
 };
 
 const Index = () => {
-  const [appState, setAppState] = useState<"splash" | "onboarding" | "main">("splash");
+  const [appState, setAppState] = useState<"splash" | "onboarding" | "main" | "save">("splash");
   const [activeTab, setActiveTab] = useState<"shortlisted" | "preview">("preview");
   const [photos, setPhotos] = useState<Photo[]>(samplePhotos);
   const [bookTitle, setBookTitle] = useState("Our Trip to Greece");
@@ -61,7 +62,6 @@ const Index = () => {
   };
 
   const handleReorder = (oldIndex: number, newIndex: number) => {
-    // We need to map filtered indices back to the full photos array
     const filteredIds = filteredPhotos.map((p) => p.id);
     const movedId = filteredIds[oldIndex];
     const targetId = filteredIds[newIndex];
@@ -87,6 +87,10 @@ const Index = () => {
 
   if (appState === "onboarding") {
     return <OnboardingScreens onComplete={handleOnboardingComplete} />;
+  }
+
+  if (appState === "save") {
+    return <SaveBookScreen onSkip={() => setAppState("main")} />;
   }
 
   return (
@@ -115,6 +119,16 @@ const Index = () => {
               onSubtitleChange={setBookSubtitle}
             />
           )}
+        </div>
+
+        {/* Continue button */}
+        <div className="sticky bottom-0 pt-3 pb-6 bg-gradient-to-t from-background via-background to-transparent">
+          <button
+            onClick={() => setAppState("save")}
+            className="w-full py-3.5 rounded-full bg-[hsl(var(--tangible-orange))] text-white font-medium text-sm hover:opacity-90 transition-opacity"
+          >
+            Continue
+          </button>
         </div>
       </div>
     </div>
