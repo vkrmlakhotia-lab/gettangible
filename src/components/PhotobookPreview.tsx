@@ -126,9 +126,7 @@ const CoverSpread = ({ coverPhoto, title, subtitle, onTitleChange, onSubtitleCha
       <div className="flex h-full">
         {/* Back cover (left) — white with TANGIBLE */}
         <div className="flex-1 flex items-center justify-center bg-white">
-          <span
-            className="text-[10px] tracking-[0.35em] uppercase font-medium text-muted-foreground/40"
-          >
+          <span className="text-[7px] tracking-[0.3em] uppercase font-normal text-muted-foreground/30">
             Tangible
           </span>
         </div>
@@ -199,9 +197,34 @@ const SpreadLayout = ({ event, pageNum }: { event: PhotoEvent; pageNum: number }
   );
 };
 
+/* ── End spread ───────────────────────────────────── */
+
+const EndSpread = () => (
+  <div className="flex flex-col items-center gap-1.5">
+    <div
+      className="w-full rounded-md overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12)] border border-border/40 bg-white"
+      style={{ aspectRatio: "297 / 105" }}
+    >
+      <div className="flex h-full">
+        <div className="flex-1 flex items-end justify-center bg-white pb-4">
+          <span className="text-[6px] tracking-[0.3em] uppercase font-normal text-muted-foreground/25">
+            Made with Tangible
+          </span>
+        </div>
+        <div className="w-px bg-border/30 flex-shrink-0" />
+        <div className="flex-1 bg-white" />
+      </div>
+    </div>
+    <div className="flex justify-between w-full px-1">
+      <span className="text-[10px] text-muted-foreground">End</span>
+      <span className="text-[10px] text-muted-foreground"></span>
+    </div>
+  </div>
+);
+
 const PhotobookPreview = ({ events, title, subtitle, onTitleChange, onSubtitleChange }: PhotobookPreviewProps) => {
   const allPhotos = events.flatMap((e) => e.photos);
-  const totalPages = events.length * 2 + 2;
+  const totalPages = events.length * 2 + 4;
 
   return (
     <div className="flex flex-col gap-6 pb-8">
@@ -212,6 +235,7 @@ const PhotobookPreview = ({ events, title, subtitle, onTitleChange, onSubtitleCh
       {events.map((event, i) => (
         <SpreadLayout key={`${event.date}-${event.location}`} event={event} pageNum={i * 2 + 3} />
       ))}
+      <EndSpread />
     </div>
   );
 };
