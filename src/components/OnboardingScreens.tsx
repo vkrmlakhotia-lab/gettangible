@@ -1,23 +1,67 @@
-import { useState, useEffect } from "react";
-import { Camera, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Camera, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { samplePhotos } from "@/data/samplePhotos";
 
 interface OnboardingScreensProps {
   onComplete: () => void;
 }
+
+/* ── Carousel of sample book covers ─────────────── */
+
+const carouselPhotos = samplePhotos.slice(0, 6).map((p) => p.url);
+
+const PhotoCarousel = () => {
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % carouselPhotos.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="w-full relative overflow-hidden rounded-2xl" style={{ aspectRatio: "3/4" }}>
+      {carouselPhotos.map((url, i) => (
+        <img
+          key={url}
+          src={url}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+          style={{ opacity: i === current ? 1 : 0 }}
+        />
+      ))}
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
+      {/* Dots */}
+      <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+        {carouselPhotos.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrent(i)}
+            className={`w-1.5 h-1.5 rounded-full transition-all ${
+              i === current ? "bg-white w-4" : "bg-white/50"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ── Onboarding flow ────────────────────────────── */
 
 const OnboardingScreens = ({ onComplete }: OnboardingScreensProps) => {
   const [step, setStep] = useState<"curate" | "import" | "analyzing">("curate");
 
   if (step === "curate") {
     return (
-      <div className="fixed inset-0 z-40 bg-background flex flex-col items-center justify-center px-8">
-        <div className="max-w-sm w-full flex flex-col items-center text-center gap-6">
-          <div className="w-40 h-40 rounded-2xl bg-muted flex items-center justify-center">
-            <Camera className="w-16 h-16 text-muted-foreground/50" strokeWidth={1.2} />
-          </div>
-          <div className="space-y-2">
+      <div className="fixed inset-0 z-40 bg-background flex items-center justify-center">
+        <div className="max-w-sm w-full flex flex-col items-center px-6 py-8 gap-5">
+          <PhotoCarousel />
+          <div className="space-y-1.5 text-center">
             <h2 className="text-xl font-semibold text-foreground">Curate an album</h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               We curate your best photos into a photo album
             </p>
           </div>
