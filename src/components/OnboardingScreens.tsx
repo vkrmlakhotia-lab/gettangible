@@ -173,6 +173,117 @@ const OnboardingScreens = ({ onComplete }: OnboardingScreensProps) => {
   return <AnalyzingScreen onComplete={onComplete} />;
 };
 
+/* ── Date range picker screen ───────────────────── */
+
+const DateRangeScreen = ({ onNext, onBack }: { onNext: () => void; onBack: () => void }) => {
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+
+  const canContinue = startDate && endDate && startDate <= endDate;
+
+  return (
+    <div className="fixed inset-0 z-40 bg-background flex flex-col">
+      {/* Header */}
+      <div className="px-6 pt-12 pb-4 flex items-center">
+        <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition-colors">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <h3 className="text-base font-semibold text-foreground flex-1 text-center pr-5">
+          Select Date Range
+        </h3>
+      </div>
+
+      <div className="max-w-sm w-full mx-auto flex flex-col items-center px-6 flex-1">
+        <div className="w-16 h-16 rounded-2xl bg-[hsl(var(--tangible-teal))]/10 flex items-center justify-center mb-4">
+          <CalendarIcon className="w-8 h-8 text-[hsl(var(--tangible-teal))]" />
+        </div>
+
+        <p className="text-sm text-muted-foreground text-center mb-8 leading-relaxed max-w-[280px]">
+          Choose the time period for your photobook. We'll find the best photos from these dates.
+        </p>
+
+        {/* Date pickers */}
+        <div className="w-full space-y-4">
+          {/* Start date */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">From</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className={cn(
+                  "w-full py-3.5 px-4 rounded-xl border text-left text-sm flex items-center justify-between transition-colors",
+                  startDate ? "border-[hsl(var(--tangible-teal))] text-foreground" : "border-border text-muted-foreground"
+                )}>
+                  {startDate ? format(startDate, "d MMMM yyyy") : "Select start date"}
+                  <CalendarIcon className="w-4 h-4 opacity-50" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={setStartDate}
+                  disabled={(date) => date > new Date()}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* End date */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">To</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className={cn(
+                  "w-full py-3.5 px-4 rounded-xl border text-left text-sm flex items-center justify-between transition-colors",
+                  endDate ? "border-[hsl(var(--tangible-teal))] text-foreground" : "border-border text-muted-foreground"
+                )}>
+                  {endDate ? format(endDate, "d MMMM yyyy") : "Select end date"}
+                  <CalendarIcon className="w-4 h-4 opacity-50" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center">
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={setEndDate}
+                  disabled={(date) => date > new Date() || (startDate ? date < startDate : false)}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+
+        {/* Summary */}
+        {canContinue && (
+          <p className="text-xs text-muted-foreground mt-4 text-center">
+            Curating photos from {format(startDate, "d MMM")} to {format(endDate, "d MMM yyyy")}
+          </p>
+        )}
+
+        {/* Continue button pinned to bottom */}
+        <div className="mt-auto w-full pb-8 pt-6">
+          <button
+            onClick={onNext}
+            disabled={!canContinue}
+            className={cn(
+              "w-full py-3.5 rounded-full font-medium text-sm transition-opacity",
+              canContinue
+                ? "bg-[hsl(var(--tangible-orange))] text-white hover:opacity-90"
+                : "bg-muted text-muted-foreground cursor-not-allowed"
+            )}
+          >
+            Curate My Photos
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const analyzeMessages = [
   "Finding your best smiles...",
   "Curating the best scenes...",
