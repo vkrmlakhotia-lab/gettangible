@@ -199,7 +199,7 @@ const SpreadLayout = ({ event, pageNum }: { event: PhotoEvent; pageNum: number }
   );
 };
 
-const PhotobookPreview = ({ events }: PhotobookPreviewProps) => {
+const PhotobookPreview = ({ events, title, subtitle, onTitleChange, onSubtitleChange }: PhotobookPreviewProps) => {
   const allPhotos = events.flatMap((e) => e.photos);
   const totalPages = events.length * 2 + 2;
 
@@ -208,7 +208,7 @@ const PhotobookPreview = ({ events }: PhotobookPreviewProps) => {
       <span className="text-xs text-muted-foreground font-medium">
         {events.length} events · {totalPages} pages
       </span>
-      <CoverSpread coverPhoto={allPhotos[0]} />
+      <CoverSpread coverPhoto={allPhotos[0]} title={title} subtitle={subtitle} onTitleChange={onTitleChange} onSubtitleChange={onSubtitleChange} />
       {events.map((event, i) => (
         <SpreadLayout key={`${event.date}-${event.location}`} event={event} pageNum={i * 2 + 3} />
       ))}

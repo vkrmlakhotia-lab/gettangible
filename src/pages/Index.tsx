@@ -26,6 +26,8 @@ const applyFilters = (photos: Photo[], filters: Filter[]): Photo[] => {
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"shortlisted" | "preview">("shortlisted");
   const [photos, setPhotos] = useState<Photo[]>(samplePhotos);
+  const [bookTitle, setBookTitle] = useState("Our Trip to Greece");
+  const [bookSubtitle, setBookSubtitle] = useState("April 2026");
   const [filters, setFilters] = useState<Filter[]>([
     { id: "screenshots", label: "Remove screenshots", count: 0, enabled: false },
     { id: "blurry", label: "Remove blurry photos", count: 0, enabled: false },
@@ -91,7 +93,13 @@ const Index = () => {
               onReorder={handleReorder}
             />
           ) : (
-            <PhotobookPreview events={events} />
+            <PhotobookPreview
+              events={events}
+              title={bookTitle}
+              subtitle={bookSubtitle}
+              onTitleChange={setBookTitle}
+              onSubtitleChange={setBookSubtitle}
+            />
           )}
         </div>
       </div>
