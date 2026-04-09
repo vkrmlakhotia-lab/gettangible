@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import PhotoToggle from "@/components/PhotoToggle";
 import ShortlistedPhotos from "@/components/ShortlistedPhotos";
 import PhotobookPreview from "@/components/PhotobookPreview";
-import { samplePhotos, Photo } from "@/data/samplePhotos";
+import { samplePhotos, Photo, groupIntoEvents } from "@/data/samplePhotos";
 import { toast } from "sonner";
 
 export interface Filter {
@@ -43,6 +43,7 @@ const Index = () => {
   }, [photos, filters]);
 
   const filteredPhotos = useMemo(() => applyFilters(photos, filters), [photos, filters]);
+  const events = useMemo(() => groupIntoEvents(filteredPhotos), [filteredPhotos]);
 
   const toggleFilter = (id: string) => {
     setFilters((prev) => prev.map((f) => (f.id === id ? { ...f, enabled: !f.enabled } : f)));
@@ -74,7 +75,7 @@ const Index = () => {
               onAddPhotos={handleAddPhotos}
             />
           ) : (
-            <PhotobookPreview photos={filteredPhotos} />
+            <PhotobookPreview events={events} />
           )}
         </div>
       </div>
