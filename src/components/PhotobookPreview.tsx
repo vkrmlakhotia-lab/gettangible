@@ -211,7 +211,66 @@ const EndSpread = () => (
   </div>
 );
 
-/* ── Spread with layout controls ─────────────────── */
+/* ── Photo arrangement strip ─────────────────────── */
+
+const PhotoArrangement = ({
+  photos,
+  onReorder,
+  onClose,
+}: {
+  photos: Photo[];
+  onReorder: (photos: Photo[]) => void;
+  onClose: () => void;
+}) => {
+  const [selected, setSelected] = useState<number | null>(null);
+
+  const handleTap = (idx: number) => {
+    if (selected === null) {
+      setSelected(idx);
+    } else {
+      // Swap
+      const newPhotos = [...photos];
+      [newPhotos[selected], newPhotos[idx]] = [newPhotos[idx], newPhotos[selected]];
+      onReorder(newPhotos);
+      setSelected(null);
+    }
+  };
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+          <ArrowLeftRight className="w-3 h-3" />
+          Tap two photos to swap
+        </span>
+        <button onClick={onClose} className="text-[10px] text-[hsl(var(--tangible-teal))] font-medium">
+          Done
+        </button>
+      </div>
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
+        {photos.map((p, i) => (
+          <button
+            key={p.id}
+            onClick={() => handleTap(i)}
+            className={cn(
+              "relative flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all",
+              selected === i
+                ? "border-[hsl(var(--tangible-teal))] scale-105 shadow-md"
+                : "border-transparent hover:border-border"
+            )}
+          >
+            <img src={p.url} alt="" className="w-full h-full object-cover" />
+            <span className="absolute bottom-0.5 right-0.5 bg-black/50 text-white text-[8px] px-1 rounded">
+              {i + 1}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ── Spread with layout + arrange controls ───────── */
 
 const SpreadWithControls = ({
   event,
@@ -220,6 +279,7 @@ const SpreadWithControls = ({
   rightLayout,
   onChangeLeft,
   onChangeRight,
+  onReorderPhotos,
 }: {
   event: PhotoEvent;
   pageNum: number;
@@ -227,8 +287,10 @@ const SpreadWithControls = ({
   rightLayout: LayoutType;
   onChangeLeft: (l: LayoutType) => void;
   onChangeRight: (l: LayoutType) => void;
+  onReorderPhotos: (photos: Photo[]) => void;
 }) => {
   const [pickerSide, setPickerSide] = useState<"left" | "right" | null>(null);
+  const [showArrange, setShowArrange] = useState(false);
   const p = event.photos;
 
   // Split photos between left and right pages
@@ -243,13 +305,27 @@ const SpreadWithControls = ({
           {formatDate(event.date)}
           {event.location && <span className="text-muted-foreground font-normal"> · {event.location}</span>}
         </p>
-        <button
-          onClick={() => setPickerSide(pickerSide ? null : "left")}
-          className="flex items-center gap-1 text-[10px] text-[hsl(var(--tangible-teal))] hover:opacity-70 transition-opacity"
-        >
-          <LayoutGrid className="w-3 h-3" />
-          Layout
-        </button>
+        <div className="flex items-center gap-2.5">
+          {p.length > 1 && (
+            <button
+              onClick={() => { setShowArrange(!showArrange); setPickerSide(null); }}
+              className={cn(
+                "flex items-center gap-1 text-[10px] transition-opacity",
+                showArrange ? "text-[hsl(var(--tangible-teal))] font-medium" : "text-[hsl(var(--tangible-teal))] hover:opacity-70"
+              )}
+            >
+              <ArrowLeftRight className="w-3 h-3" />
+              Arrange
+            </button>
+          )}
+          <button
+            onClick={() => { setPickerSide(pickerSide ? null : "left"); setShowArrange(false); }}
+            className="flex items-center gap-1 text-[10px] text-[hsl(var(--tangible-teal))] hover:opacity-70 transition-opacity"
+          >
+            <LayoutGrid className="w-3 h-3" />
+            Layout
+          </button>
+        </div>
       </div>
 
       {pickerSide && (
@@ -265,6 +341,16 @@ const SpreadWithControls = ({
         </div>
       )}
 
+      {showArrange && (
+        <div className="w-full">
+          <PhotoArrangement
+            photos={p}
+            onReorder={onReorderPhotos}
+            onClose={() => setShowArrange(false)}
+          />
+        </div>
+      )}
+
       <div
         className="w-full rounded-md overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12)] border border-border/40 bg-white"
         style={{ aspectRatio: "297 / 105" }}
@@ -272,14 +358,14 @@ const SpreadWithControls = ({
         <div className="flex h-full">
           <div
             className="flex-1 overflow-hidden cursor-pointer hover:ring-2 hover:ring-[hsl(var(--tangible-teal))]/30 hover:ring-inset transition-shadow"
-            onClick={() => setPickerSide(pickerSide === "left" ? null : "left")}
+            onClick={() => { setPickerSide(pickerSide === "left" ? null : "left"); setShowArrange(false); }}
           >
             <div className="w-full h-full">{renderPage(leftLayout, leftPhotos)}</div>
           </div>
           <div className="w-px bg-border/30 flex-shrink-0" />
           <div
             className="flex-1 overflow-hidden cursor-pointer hover:ring-2 hover:ring-[hsl(var(--tangible-teal))]/30 hover:ring-inset transition-shadow"
-            onClick={() => setPickerSide(pickerSide === "right" ? null : "right")}
+            onClick={() => { setPickerSide(pickerSide === "right" ? null : "right"); setShowArrange(false); }}
           >
             <div className="w-full h-full">{rightPhotos.length > 0 ? renderPage(rightLayout, rightPhotos) : <PageEmpty />}</div>
           </div>
