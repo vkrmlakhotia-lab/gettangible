@@ -314,12 +314,12 @@ const AnalyzingScreen = ({ onComplete }: { onComplete: () => void }) => {
       setMsgIndex((prev) => {
         if (prev >= analyzeMessages.length - 1) {
           clearInterval(interval);
-          setTimeout(onComplete, 1500);
+          setTimeout(onComplete, 600);
           return prev;
         }
         return prev + 1;
       });
-    }, 2500);
+    }, 1200);
     return () => clearInterval(interval);
   }, [onComplete]);
 
