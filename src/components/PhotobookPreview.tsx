@@ -153,7 +153,6 @@ const CoverSpread = ({ coverPhoto, title, subtitle, onTitleChange, onSubtitleCha
               placeholder="Subtitle"
             />
           </div>
-          </div>
         </div>
       </div>
     </div>
