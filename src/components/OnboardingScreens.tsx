@@ -56,7 +56,7 @@ const PhotoCarousel = () => {
 /* ── Onboarding flow ────────────────────────────── */
 
 const OnboardingScreens = ({ onComplete }: OnboardingScreensProps) => {
-  const [step, setStep] = useState<"curate" | "import" | "analyzing">("curate");
+  const [step, setStep] = useState<"curate" | "import" | "dates" | "analyzing">("curate");
 
   if (step === "curate") {
     return (
