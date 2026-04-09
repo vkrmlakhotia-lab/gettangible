@@ -1,9 +1,12 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { arrayMove } from "@dnd-kit/sortable";
 import SplashScreen from "@/components/SplashScreen";
 import OnboardingScreens from "@/components/OnboardingScreens";
 import SaveBookScreen from "@/components/SaveBookScreen";
+import CheckoutPage from "@/components/CheckoutPage";
+import OrderConfirmation from "@/components/OrderConfirmation";
+import OrderTracking from "@/components/OrderTracking";
 import PhotoToggle from "@/components/PhotoToggle";
 import ShortlistedPhotos from "@/components/ShortlistedPhotos";
 import PhotobookPreview from "@/components/PhotobookPreview";
@@ -27,8 +30,10 @@ const applyFilters = (photos: Photo[], filters: Filter[]): Photo[] => {
   });
 };
 
+type AppState = "splash" | "onboarding" | "celebrate" | "main" | "save" | "checkout" | "confirmed" | "tracking";
+
 const Index = () => {
-  const [appState, setAppState] = useState<"splash" | "onboarding" | "celebrate" | "main" | "save">("splash");
+  const [appState, setAppState] = useState<AppState>("splash");
   const [activeTab, setActiveTab] = useState<"shortlisted" | "preview">("preview");
   const [photos, setPhotos] = useState<Photo[]>(samplePhotos);
   const [bookTitle, setBookTitle] = useState("Our Trip to Greece");
@@ -52,6 +57,7 @@ const Index = () => {
 
   const filteredPhotos = useMemo(() => applyFilters(photos, filters), [photos, filters]);
   const events = useMemo(() => groupIntoEvents(filteredPhotos), [filteredPhotos]);
+  const totalPages = events.length * 2 + 4;
 
   const toggleFilter = (id: string) => {
     setFilters((prev) => prev.map((f) => (f.id === id ? { ...f, enabled: !f.enabled } : f)));
@@ -66,7 +72,6 @@ const Index = () => {
     const filteredIds = filteredPhotos.map((p) => p.id);
     const movedId = filteredIds[oldIndex];
     const targetId = filteredIds[newIndex];
-
     setPhotos((prev) => {
       const realOld = prev.findIndex((p) => p.id === movedId);
       const realNew = prev.findIndex((p) => p.id === targetId);
@@ -75,62 +80,29 @@ const Index = () => {
     });
   };
 
-  const handleAddPhotos = () => {
-    toast("Add photos flow coming soon");
-  };
-
+  const handleAddPhotos = () => toast("Add photos flow coming soon");
   const handleSplashComplete = useCallback(() => setAppState("onboarding"), []);
   const handleOnboardingComplete = useCallback(() => setAppState("celebrate"), []);
 
-  // Confetti celebration screen
+  // Confetti celebration
   useEffect(() => {
     if (appState !== "celebrate") return;
-
-    // Fire confetti bursts
     const colors = ["#f8961e", "#43aa8b", "#f9c74f", "#90be6d", "#577590"];
     const end = Date.now() + 2000;
-
     const frame = () => {
-      confetti({
-        particleCount: 3,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0, y: 0.6 },
-        colors,
-      });
-      confetti({
-        particleCount: 3,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1, y: 0.6 },
-        colors,
-      });
-
-      if (Date.now() < end) {
-        requestAnimationFrame(frame);
-      }
+      confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0, y: 0.6 }, colors });
+      confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1, y: 0.6 }, colors });
+      if (Date.now() < end) requestAnimationFrame(frame);
     };
     frame();
-
-    // Big burst
-    confetti({
-      particleCount: 100,
-      spread: 100,
-      origin: { y: 0.5 },
-      colors,
-    });
-
+    confetti({ particleCount: 100, spread: 100, origin: { y: 0.5 }, colors });
     const timer = setTimeout(() => setAppState("main"), 2500);
     return () => clearTimeout(timer);
   }, [appState]);
 
-  if (appState === "splash") {
-    return <SplashScreen onComplete={handleSplashComplete} />;
-  }
-
-  if (appState === "onboarding") {
-    return <OnboardingScreens onComplete={handleOnboardingComplete} />;
-  }
+  // Screens
+  if (appState === "splash") return <SplashScreen onComplete={handleSplashComplete} />;
+  if (appState === "onboarding") return <OnboardingScreens onComplete={handleOnboardingComplete} />;
 
   if (appState === "celebrate") {
     return (
@@ -145,15 +117,48 @@ const Index = () => {
   }
 
   if (appState === "save") {
-    return <SaveBookScreen onSkip={() => setAppState("main")} coverUrl={filteredPhotos[0]?.url} title={bookTitle} subtitle={bookSubtitle} />;
+    return <SaveBookScreen onSkip={() => setAppState("checkout")} coverUrl={filteredPhotos[0]?.url} title={bookTitle} subtitle={bookSubtitle} />;
+  }
+
+  if (appState === "checkout") {
+    return (
+      <CheckoutPage
+        coverUrl={filteredPhotos[0]?.url}
+        title={bookTitle}
+        pageCount={totalPages}
+        onBack={() => setAppState("save")}
+        onComplete={() => setAppState("confirmed")}
+      />
+    );
+  }
+
+  if (appState === "confirmed") {
+    return (
+      <OrderConfirmation
+        title={bookTitle}
+        pageCount={totalPages}
+        total={27.99}
+        onViewOrders={() => setAppState("tracking")}
+        onBackHome={() => setAppState("main")}
+      />
+    );
+  }
+
+  if (appState === "tracking") {
+    return (
+      <OrderTracking
+        coverUrl={filteredPhotos[0]?.url}
+        title={bookTitle}
+        total={27.99}
+        onBack={() => setAppState("confirmed")}
+      />
+    );
   }
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-md mx-auto px-4 py-6">
-        <h1 className="text-lg font-semibold text-foreground text-center mb-4">
-          Your Photobook
-        </h1>
+        <h1 className="text-lg font-semibold text-foreground text-center mb-4">Your Photobook</h1>
         <PhotoToggle activeTab={activeTab} onTabChange={setActiveTab} />
         <div className="mt-5">
           {activeTab === "shortlisted" ? (
@@ -175,8 +180,6 @@ const Index = () => {
             />
           )}
         </div>
-
-        {/* Continue button */}
         <div className="sticky bottom-0 pt-3 pb-6 bg-gradient-to-t from-background via-background to-transparent">
           <button
             onClick={() => setAppState("save")}
