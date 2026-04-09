@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { arrayMove } from "@dnd-kit/sortable";
 import PhotoToggle from "@/components/PhotoToggle";
 import ShortlistedPhotos from "@/components/ShortlistedPhotos";
 import PhotobookPreview from "@/components/PhotobookPreview";
@@ -54,6 +55,20 @@ const Index = () => {
     toast("Photo removed from shortlist");
   };
 
+  const handleReorder = (oldIndex: number, newIndex: number) => {
+    // We need to map filtered indices back to the full photos array
+    const filteredIds = filteredPhotos.map((p) => p.id);
+    const movedId = filteredIds[oldIndex];
+    const targetId = filteredIds[newIndex];
+
+    setPhotos((prev) => {
+      const realOld = prev.findIndex((p) => p.id === movedId);
+      const realNew = prev.findIndex((p) => p.id === targetId);
+      if (realOld === -1 || realNew === -1) return prev;
+      return arrayMove(prev, realOld, realNew);
+    });
+  };
+
   const handleAddPhotos = () => {
     toast("Add photos flow coming soon");
   };
@@ -73,6 +88,7 @@ const Index = () => {
               onToggleFilter={toggleFilter}
               onRemove={handleRemove}
               onAddPhotos={handleAddPhotos}
+              onReorder={handleReorder}
             />
           ) : (
             <PhotobookPreview events={events} />
