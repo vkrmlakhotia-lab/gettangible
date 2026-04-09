@@ -142,6 +142,8 @@ const Index = () => {
         </div>
       </div>
     );
+  }
+
   if (appState === "save") {
     return <SaveBookScreen onSkip={() => setAppState("main")} coverUrl={filteredPhotos[0]?.url} title={bookTitle} subtitle={bookSubtitle} />;
   }
