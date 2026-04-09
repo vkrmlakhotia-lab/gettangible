@@ -81,35 +81,44 @@ const OnboardingScreens = ({ onComplete }: OnboardingScreensProps) => {
 
   if (step === "import") {
     return (
-      <div className="fixed inset-0 z-40 bg-background flex flex-col px-6 pt-12">
-        <div className="max-w-sm w-full mx-auto flex flex-col items-center text-center gap-6 flex-1">
-          <h3 className="text-base font-semibold text-foreground">Import Photos</h3>
-          <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-tangible-green to-tangible-teal flex items-center justify-center mt-6">
-            <Camera className="w-10 h-10 text-white" />
+      <div className="fixed inset-0 z-40 bg-black/50 flex items-end justify-center sm:items-center">
+        <div className="max-w-sm w-full bg-card rounded-t-2xl sm:rounded-2xl overflow-hidden">
+          {/* Header section */}
+          <div className="flex flex-col items-center text-center px-6 pt-8 pb-4 gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[hsl(var(--tangible-green))] to-[hsl(var(--tangible-teal))] flex items-center justify-center shadow-lg">
+              <Camera className="w-8 h-8 text-white" />
+            </div>
+            <div className="space-y-1.5">
+              <h2 className="text-base font-semibold text-foreground">
+                "Tangible" Would Like to Access Your Photos
+              </h2>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                This lets Tangible find your best photos and curate them into a photobook. Photos are analysed locally on your device.
+              </p>
+            </div>
           </div>
-          <div className="space-y-2">
-            <h2 className="text-lg font-semibold text-foreground">
-              Allow access to your photos
-            </h2>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Tangible reads your photo library locally on your device to find your best shots. Photos are only uploaded when you confirm your book.
-            </p>
+
+          {/* Action buttons — iOS-style stacked */}
+          <div className="border-t border-border">
+            <button
+              onClick={() => setStep("analyzing")}
+              className="w-full py-3.5 text-sm font-medium text-[hsl(var(--tangible-teal))] hover:bg-muted/50 transition-colors border-b border-border"
+            >
+              Allow Full Access
+            </button>
+            <button
+              onClick={() => setStep("analyzing")}
+              className="w-full py-3.5 text-sm text-[hsl(var(--tangible-teal))] hover:bg-muted/50 transition-colors border-b border-border"
+            >
+              Limit Access…
+            </button>
+            <button
+              onClick={onComplete}
+              className="w-full py-3.5 text-sm text-muted-foreground hover:bg-muted/50 transition-colors"
+            >
+              Don't Allow
+            </button>
           </div>
-          <button
-            onClick={() => setStep("analyzing")}
-            className="w-full py-3 rounded-full bg-tangible-orange text-white font-medium text-sm hover:opacity-90 transition-opacity mt-4"
-          >
-            Allow Access to Photos
-          </button>
-          <button
-            onClick={onComplete}
-            className="text-sm text-muted-foreground hover:underline"
-          >
-            Not now
-          </button>
-          <p className="text-[10px] text-muted-foreground/60 mt-auto pb-6">
-            🔒 Photos never leave your device without your permission
-          </p>
         </div>
       </div>
     );
