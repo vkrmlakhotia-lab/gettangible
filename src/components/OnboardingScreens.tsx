@@ -66,7 +66,7 @@ const OnboardingScreens = ({ onComplete }: OnboardingScreensProps) => {
           <div className="space-y-1.5 text-center">
             <h2 className="text-xl font-semibold text-foreground">Build your album</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              We curate your best photos into a beautiful photo album. Takes just 2 minutes, starting at £25.
+              Takes just 2 minutes, starting at £25.
             </p>
           </div>
           <button
