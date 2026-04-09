@@ -15,14 +15,55 @@ const Img = ({ src }: { src: string }) => (
 
 /* ── Single-page layouts ─────────────────────────── */
 
-/** 1 photo on a page — full bleed */
+/** Full bleed — photo fills the entire page */
 const Page1 = ({ photos }: { photos: Photo[] }) => (
   <div className="w-full h-full">
     <Img src={photos[0].url} />
   </div>
 );
 
-/** 2 photos stacked vertically on a page */
+/** Matted — photo centered with white space around it */
+const PageMatted = ({ photos }: { photos: Photo[] }) => (
+  <div className="w-full h-full flex items-center justify-center bg-white">
+    <div className="w-[72%] h-[78%] shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
+      <Img src={photos[0].url} />
+    </div>
+  </div>
+);
+
+/** Hero + Detail — large photo (65%) + small detail (35%), side by side */
+const PageHeroDetail = ({ photos }: { photos: Photo[] }) => (
+  <div className="flex gap-[2px] h-full">
+    <div className="w-[63%] h-full"><Img src={photos[0].url} /></div>
+    <div className="w-[37%] h-full"><Img src={photos[1].url} /></div>
+  </div>
+);
+
+/** 3 portrait photos side by side */
+const Page3Portraits = ({ photos }: { photos: Photo[] }) => (
+  <div className="flex gap-[2px] h-full">
+    {photos.slice(0, 3).map((p) => (
+      <div key={p.id} className="flex-1 h-full flex items-center justify-center">
+        <div className="w-[85%] h-full">
+          <Img src={p.url} />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+/** 1 portrait left + 2 landscape stacked right */
+const PagePortraitAndLandscapes = ({ photos }: { photos: Photo[] }) => (
+  <div className="flex gap-[2px] h-full">
+    <div className="w-[40%] h-full"><Img src={photos[0].url} /></div>
+    <div className="w-[60%] h-full flex flex-col gap-[2px]">
+      <div className="flex-1"><Img src={photos[1].url} /></div>
+      <div className="flex-1"><Img src={photos[2].url} /></div>
+    </div>
+  </div>
+);
+
+/** 2 photos stacked vertically */
 const Page2Stack = ({ photos }: { photos: Photo[] }) => (
   <div className="flex flex-col gap-[2px] h-full">
     <div className="flex-1"><Img src={photos[0].url} /></div>
@@ -30,7 +71,7 @@ const Page2Stack = ({ photos }: { photos: Photo[] }) => (
   </div>
 );
 
-/** 3 photos on a page: 1 large top, 2 small bottom */
+/** 1 large top, 2 small bottom */
 const Page3 = ({ photos }: { photos: Photo[] }) => (
   <div className="flex flex-col gap-[2px] h-full">
     <div className="flex-[2]"><Img src={photos[0].url} /></div>
@@ -41,15 +82,7 @@ const Page3 = ({ photos }: { photos: Photo[] }) => (
   </div>
 );
 
-/** 2 photos in a 2×1 grid on a page */
-const Page2Grid = ({ photos }: { photos: Photo[] }) => (
-  <div className="grid grid-cols-2 gap-[2px] h-full">
-    <div><Img src={photos[0].url} /></div>
-    <div><Img src={photos[1].url} /></div>
-  </div>
-);
-
-/** Empty page with muted background */
+/** Empty page */
 const PageEmpty = () => (
   <div className="w-full h-full bg-muted/20" />
 );
@@ -67,37 +100,37 @@ const buildSpread = (event: PhotoEvent): SpreadPages => {
 
   switch (count) {
     case 1:
-      // Full bleed left, empty right
+      // Spread 1: Full bleed left, empty right
       return {
         left: <Page1 photos={[p[0]]} />,
         right: <PageEmpty />,
       };
     case 2:
-      // One photo per page
+      // Spread 2: Matted photo on each page
       return {
-        left: <Page1 photos={[p[0]]} />,
-        right: <Page1 photos={[p[1]]} />,
+        left: <PageMatted photos={[p[0]]} />,
+        right: <PageMatted photos={[p[1]]} />,
       };
     case 3:
-      // Hero left, 2 stacked right
+      // 1 portrait + 2 landscape on left page, empty right
       return {
-        left: <Page1 photos={[p[0]]} />,
-        right: <Page2Stack photos={[p[1], p[2]]} />,
+        left: <PagePortraitAndLandscapes photos={[p[0], p[1], p[2]]} />,
+        right: <PageEmpty />,
       };
     case 4:
-      // 2 stacked left, 2 stacked right
+      // 2 stacked per page
       return {
         left: <Page2Stack photos={[p[0], p[1]]} />,
         right: <Page2Stack photos={[p[2], p[3]]} />,
       };
     case 5:
-      // Hero left, 2 top-right + 2 bottom as 3-grid right
+      // Left: hero + detail (2 photos), Right: 3 portraits
       return {
-        left: <Page2Stack photos={[p[0], p[1]]} />,
-        right: <Page3 photos={[p[2], p[3], p[4]]} />,
+        left: <PageHeroDetail photos={[p[0], p[1]]} />,
+        right: <Page3Portraits photos={[p[2], p[3], p[4]]} />,
       };
     default: {
-      // 6+ photos: 3 per page
+      // 6+: 3 per page
       const left = p.slice(0, 3);
       const right = p.slice(3, 6);
       return {
@@ -119,7 +152,6 @@ const SpreadLayout = ({ event, pageNum }: { event: PhotoEvent; pageNum: number }
 
   return (
     <div className="flex flex-col items-center gap-1.5">
-      {/* Event label */}
       <div className="w-full px-1">
         <p className="text-[10px] font-semibold text-foreground/60 tracking-wide">
           {formatDate(event.date)}
@@ -127,30 +159,21 @@ const SpreadLayout = ({ event, pageNum }: { event: PhotoEvent; pageNum: number }
         </p>
       </div>
 
-      {/* Two-page spread */}
       <div
         className="w-full rounded-md overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12)] border border-border/40 bg-white"
         style={{ aspectRatio: "297 / 105" }}
       >
         <div className="flex h-full">
-          {/* Left page */}
           <div className="flex-1 p-1.5 overflow-hidden">
-            <div className="w-full h-full rounded-sm overflow-hidden">
-              {left}
-            </div>
+            <div className="w-full h-full rounded-sm overflow-hidden">{left}</div>
           </div>
-          {/* Center seam */}
           <div className="w-px bg-border/30 flex-shrink-0" />
-          {/* Right page */}
           <div className="flex-1 p-1.5 overflow-hidden">
-            <div className="w-full h-full rounded-sm overflow-hidden">
-              {right}
-            </div>
+            <div className="w-full h-full rounded-sm overflow-hidden">{right}</div>
           </div>
         </div>
       </div>
 
-      {/* Page numbers */}
       <div className="flex justify-between w-full px-1">
         <span className="text-[10px] text-muted-foreground">{pageNum}</span>
         <span className="text-[10px] text-muted-foreground">{pageNum + 1}</span>
