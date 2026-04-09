@@ -143,13 +143,13 @@ const OnboardingScreens = ({ onComplete }: OnboardingScreensProps) => {
           {/* 3 buttons */}
           <div className="px-6 py-4 space-y-2.5">
             <button
-              onClick={() => setStep("analyzing")}
+              onClick={() => setStep("dates")}
               className="w-full py-3.5 rounded-xl bg-[hsl(var(--tangible-teal))] text-white font-medium text-sm hover:opacity-90 transition-opacity"
             >
               Allow Full Access
             </button>
             <button
-              onClick={() => setStep("analyzing")}
+              onClick={() => setStep("dates")}
               className="w-full py-3.5 rounded-xl border border-border text-muted-foreground text-sm hover:bg-muted/40 transition-colors"
             >
               Limit Access…
