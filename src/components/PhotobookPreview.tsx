@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, LayoutGrid } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Plus, LayoutGrid, ArrowLeftRight, GripVertical } from "lucide-react";
 import { PhotoEvent, Photo } from "@/data/samplePhotos";
 import { cn } from "@/lib/utils";
 
