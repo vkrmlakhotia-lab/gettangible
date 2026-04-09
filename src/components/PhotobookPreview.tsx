@@ -138,10 +138,21 @@ const CoverSpread = ({ coverPhoto, title, subtitle, onTitleChange, onSubtitleCha
           {coverPhoto && <Img src={coverPhoto.url} />}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
           <div className="absolute bottom-3 left-3 right-3">
-            <h2 className="text-sm font-bold text-white tracking-wide">
-              Our Trip to Greece
-            </h2>
-            <p className="text-[9px] text-white/70 mt-0.5">April 2026</p>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => onTitleChange(e.target.value)}
+              className="text-sm font-bold text-white tracking-wide bg-transparent border-none outline-none w-full placeholder:text-white/50"
+              placeholder="Your Photobook Title"
+            />
+            <input
+              type="text"
+              value={subtitle}
+              onChange={(e) => onSubtitleChange(e.target.value)}
+              className="text-[9px] text-white/70 mt-0.5 bg-transparent border-none outline-none w-full placeholder:text-white/40"
+              placeholder="Subtitle"
+            />
+          </div>
           </div>
         </div>
       </div>
