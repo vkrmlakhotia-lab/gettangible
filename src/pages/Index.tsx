@@ -21,6 +21,15 @@ export interface Filter {
   enabled: boolean;
 }
 
+export interface CartItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  coverUrl?: string;
+  pageCount: number;
+  price: number;
+}
+
 const applyFilters = (photos: Photo[], filters: Filter[]): Photo[] => {
   return photos.filter((p) => {
     if (filters.find((f) => f.id === "screenshots")?.enabled && p.isScreenshot) return false;
@@ -40,6 +49,7 @@ const Index = () => {
   const [photos, setPhotos] = useState<Photo[]>(samplePhotos);
   const [bookTitle, setBookTitle] = useState("Our Trip to Greece");
   const [bookSubtitle, setBookSubtitle] = useState("April 2026");
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [filters, setFilters] = useState<Filter[]>([
     { id: "screenshots", label: "Remove screenshots", count: 0, enabled: false },
     { id: "blurry", label: "Remove blurry photos", count: 0, enabled: false },
@@ -82,6 +92,27 @@ const Index = () => {
     });
   };
 
+  const handleAddToCart = () => {
+    const newItem: CartItem = {
+      id: crypto.randomUUID(),
+      title: bookTitle,
+      subtitle: bookSubtitle,
+      coverUrl: filteredPhotos[0]?.url,
+      pageCount: totalPages,
+      price: 24.0,
+    };
+    setCart((prev) => [...prev, newItem]);
+    setAppState(isSignedIn ? "checkout" : "save");
+  };
+
+  const handleAddAnotherBook = () => {
+    setAppState("dates");
+  };
+
+  const handleRemoveFromCart = (id: string) => {
+    setCart((prev) => prev.filter((item) => item.id !== id));
+  };
+
   const handleAddPhotos = () => toast("Add photos flow coming soon");
   const handleSplashComplete = useCallback(() => setAppState("onboarding"), []);
   const handleOnboardingComplete = useCallback(() => setAppState("celebrate"), []);
@@ -101,6 +132,9 @@ const Index = () => {
     const timer = setTimeout(() => setAppState("main"), 2500);
     return () => clearTimeout(timer);
   }, [appState]);
+
+  const deliveryPrice = 3.99;
+  const cartTotal = cart.reduce((sum, item) => sum + item.price, 0) + deliveryPrice;
 
   // Screens
   if (appState === "splash") return <SplashScreen onComplete={handleSplashComplete} />;
@@ -135,9 +169,9 @@ const Index = () => {
   if (appState === "checkout") {
     return (
       <CheckoutPage
-        coverUrl={filteredPhotos[0]?.url}
-        title={bookTitle}
-        pageCount={totalPages}
+        items={cart}
+        onRemoveItem={handleRemoveFromCart}
+        onAddAnother={handleAddAnotherBook}
         onBack={() => setAppState("main")}
         onComplete={() => setAppState("confirmed")}
       />
@@ -147,11 +181,11 @@ const Index = () => {
   if (appState === "confirmed") {
     return (
       <OrderConfirmation
-        title={bookTitle}
-        pageCount={totalPages}
-        total={27.99}
+        title={cart.length > 1 ? `${cart.length} Photobooks` : bookTitle}
+        pageCount={cart.reduce((sum, item) => sum + item.pageCount, 0)}
+        total={cartTotal}
         onViewOrders={() => setAppState("tracking")}
-        onBackHome={() => setAppState("dates")}
+        onBackHome={() => { setCart([]); setAppState("dates"); }}
       />
     );
   }
@@ -160,15 +194,14 @@ const Index = () => {
     return (
       <OrderTracking
         coverUrl={filteredPhotos[0]?.url}
-        title={bookTitle}
-        total={27.99}
+        title={cart.length > 1 ? `${cart.length} Photobooks` : bookTitle}
+        total={cartTotal}
         onBack={() => setAppState("confirmed")}
       />
     );
   }
 
   const bookPrice = 24.0;
-  const deliveryPrice = 3.99;
   const estimatedTotal = bookPrice + deliveryPrice;
 
   return (
@@ -185,6 +218,21 @@ const Index = () => {
           <h1 className="text-lg font-semibold text-foreground">Your Photobook</h1>
           <div className="w-5" />
         </div>
+
+        {/* Cart badge */}
+        {cart.length > 0 && (
+          <button
+            onClick={() => setAppState(isSignedIn ? "checkout" : "save")}
+            className="mb-3 w-full flex items-center justify-between p-3 rounded-xl border border-[hsl(var(--tangible-teal))]/30 bg-[hsl(var(--tangible-teal))]/5"
+          >
+            <span className="text-xs text-foreground">
+              🛒 {cart.length} book{cart.length > 1 ? "s" : ""} in basket
+            </span>
+            <span className="text-xs font-semibold text-[hsl(var(--tangible-teal))]">
+              View basket →
+            </span>
+          </button>
+        )}
 
         <PhotoToggle activeTab={activeTab} onTabChange={setActiveTab} />
         <div className="mt-5">
@@ -214,10 +262,10 @@ const Index = () => {
             <span className="text-sm font-semibold text-[hsl(var(--tangible-orange))]">£{estimatedTotal.toFixed(2)}</span>
           </div>
           <button
-            onClick={() => setAppState(isSignedIn ? "checkout" : "save")}
+            onClick={handleAddToCart}
             className="w-full py-3.5 rounded-full bg-[hsl(var(--tangible-orange))] text-white font-medium text-sm hover:opacity-90 transition-opacity"
           >
-            Continue — £{estimatedTotal.toFixed(2)}
+            {cart.length > 0 ? "Add to Basket" : "Continue — £" + estimatedTotal.toFixed(2)}
           </button>
         </div>
       </div>
