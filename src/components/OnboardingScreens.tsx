@@ -94,6 +94,12 @@ const OnboardingScreens = ({ onComplete, initialStep = "curate", onBack }: Onboa
           <button className="text-sm text-tangible-orange hover:underline">
             Already have an account? Sign in
           </button>
+          <a
+            href="/privacy"
+            className="text-[11px] text-muted-foreground hover:underline"
+          >
+            Privacy Policy
+          </a>
         </div>
       </div>
     );

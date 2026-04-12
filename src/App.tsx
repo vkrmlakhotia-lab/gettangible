@@ -15,6 +15,7 @@ import Basket from "./pages/Basket.tsx";
 import Checkout from "./pages/Checkout.tsx";
 import Creations from "./pages/Creations.tsx";
 import Account from "./pages/Account.tsx";
+import PrivacyPolicy from "./pages/PrivacyPolicy.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/checkout/:id" element={<Checkout />} />
               <Route path="/creations" element={<Creations />} />
               <Route path="/account" element={<Account />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <BottomNav />
