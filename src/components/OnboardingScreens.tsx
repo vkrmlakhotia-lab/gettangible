@@ -165,12 +165,6 @@ const OnboardingScreens = ({ onComplete, initialStep = "curate", onBack }: Onboa
               Allow Full Access
             </button>
             <button
-              onClick={() => setStep("dates")}
-              className="w-full py-3.5 rounded-xl border border-border text-muted-foreground text-sm hover:bg-muted/40 transition-colors"
-            >
-              Limit Access…
-            </button>
-            <button
               onClick={onComplete}
               className="w-full py-3.5 rounded-xl border border-border text-muted-foreground text-sm hover:bg-muted/40 transition-colors"
             >
