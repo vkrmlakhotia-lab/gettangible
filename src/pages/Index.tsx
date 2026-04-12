@@ -205,7 +205,7 @@ const Index = () => {
             <span className="text-sm font-semibold text-[hsl(var(--tangible-orange))]">£{estimatedTotal.toFixed(2)}</span>
           </div>
           <button
-            onClick={() => setAppState("save")}
+            onClick={() => setAppState(isSignedIn ? "checkout" : "save")}
             className="w-full py-3.5 rounded-full bg-[hsl(var(--tangible-orange))] text-white font-medium text-sm hover:opacity-90 transition-opacity"
           >
             Continue — £{estimatedTotal.toFixed(2)}
