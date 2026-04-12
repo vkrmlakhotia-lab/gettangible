@@ -1,12 +1,19 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBooks } from '@/context/BookContext';
 import { useAuth } from '@/context/AuthContext';
 import { Gift } from 'lucide-react';
+import SignInSheet from '@/components/SignInSheet';
 
 const HomePage = () => {
   const { projects } = useBooks();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+
+  const [showSignIn, setShowSignIn] = useState(false);
+  const isReturningUnauthenticated =
+    !isAuthenticated &&
+    localStorage.getItem('hasSignedInBefore') === 'true';
 
   const activeProjects = projects.filter(p => p.status !== 'archived');
   const firstName = user?.user_metadata?.full_name?.split(' ')[0]
@@ -21,6 +28,20 @@ const HomePage = () => {
   if (activeProjects.length === 0) {
     return (
       <div className="min-h-screen bg-background pb-24">
+        {/* Sign-back-in banner for returning unauthenticated users */}
+        {isReturningUnauthenticated && (
+          <div className="mx-4 mt-4 bg-[#43aa8b]/10 border border-[#43aa8b]/30 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+            <p className="text-sm text-[#43aa8b] font-medium leading-snug">
+              Sign back in to access your books
+            </p>
+            <button
+              onClick={() => setShowSignIn(true)}
+              className="text-sm font-semibold text-white bg-[#43aa8b] px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity flex-shrink-0"
+            >
+              Sign in
+            </button>
+          </div>
+        )}
         <header className="flex items-center justify-center px-6 pt-14 pb-4 border-b border-border">
           <h1 className="text-[17px] font-semibold text-foreground">My Books</h1>
         </header>
@@ -65,6 +86,7 @@ const HomePage = () => {
             <p className="text-[10px] text-muted-foreground mt-1">— Sarah, London</p>
           </div>
         </div>
+        <SignInSheet isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
       </div>
     );
   }
@@ -72,6 +94,20 @@ const HomePage = () => {
   // ── Main state (04 / GIFT-1) ───────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background pb-24">
+      {/* Sign-back-in banner for returning unauthenticated users */}
+      {isReturningUnauthenticated && (
+        <div className="mx-4 mt-4 bg-[#43aa8b]/10 border border-[#43aa8b]/30 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+          <p className="text-sm text-[#43aa8b] font-medium leading-snug">
+            Sign back in to access your books
+          </p>
+          <button
+            onClick={() => setShowSignIn(true)}
+            className="text-sm font-semibold text-white bg-[#43aa8b] px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity flex-shrink-0"
+          >
+            Sign in
+          </button>
+        </div>
+      )}
       <header className="flex items-center justify-center px-6 pt-14 pb-4 border-b border-border">
         <h1 className="text-[17px] font-semibold text-foreground">My Books</h1>
       </header>
@@ -141,6 +177,7 @@ const HomePage = () => {
           ))}
         </div>
       </div>
+      <SignInSheet isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
     </div>
   );
 };
