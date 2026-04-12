@@ -35,6 +35,7 @@ type AppState = "splash" | "onboarding" | "celebrate" | "main" | "save" | "check
 
 const Index = () => {
   const [appState, setAppState] = useState<AppState>("splash");
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const [activeTab, setActiveTab] = useState<"shortlisted" | "preview">("preview");
   const [photos, setPhotos] = useState<Photo[]>(samplePhotos);
   const [bookTitle, setBookTitle] = useState("Our Trip to Greece");
@@ -119,7 +120,16 @@ const Index = () => {
   }
 
   if (appState === "save") {
-    return <SaveBookScreen onSkip={() => setAppState("checkout")} onBack={() => setAppState("main")} coverUrl={filteredPhotos[0]?.url} title={bookTitle} subtitle={bookSubtitle} />;
+    return (
+      <SaveBookScreen
+        onSkip={() => setAppState("checkout")}
+        onSignIn={() => { setIsSignedIn(true); setAppState("checkout"); }}
+        onBack={() => setAppState("main")}
+        coverUrl={filteredPhotos[0]?.url}
+        title={bookTitle}
+        subtitle={bookSubtitle}
+      />
+    );
   }
 
   if (appState === "checkout") {
@@ -204,7 +214,7 @@ const Index = () => {
             <span className="text-sm font-semibold text-[hsl(var(--tangible-orange))]">£{estimatedTotal.toFixed(2)}</span>
           </div>
           <button
-            onClick={() => setAppState("save")}
+            onClick={() => setAppState(isSignedIn ? "checkout" : "save")}
             className="w-full py-3.5 rounded-full bg-[hsl(var(--tangible-orange))] text-white font-medium text-sm hover:opacity-90 transition-opacity"
           >
             Continue — £{estimatedTotal.toFixed(2)}
