@@ -35,6 +35,7 @@ type AppState = "splash" | "onboarding" | "celebrate" | "main" | "save" | "check
 
 const Index = () => {
   const [appState, setAppState] = useState<AppState>("splash");
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const [activeTab, setActiveTab] = useState<"shortlisted" | "preview">("preview");
   const [photos, setPhotos] = useState<Photo[]>(samplePhotos);
   const [bookTitle, setBookTitle] = useState("Our Trip to Greece");
