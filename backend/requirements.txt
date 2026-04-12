@@ -1,0 +1,2 @@
+# No external dependencies for basic functionality
+# The tool uses Python stdlib: subprocess, shutil, pathlib, logging, argparse
