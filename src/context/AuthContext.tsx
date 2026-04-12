@@ -28,6 +28,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Listen for auth changes (login, logout, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (_event === 'SIGNED_IN') {
+        localStorage.setItem('hasSignedInBefore', 'true')
+      }
       setSession(session)
       setUser(session?.user ?? null)
       setIsLoading(false)
@@ -40,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: 'com.vikramaditya.tangible://auth/callback',
       },
     })
   }
