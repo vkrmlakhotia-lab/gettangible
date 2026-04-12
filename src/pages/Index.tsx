@@ -128,7 +128,7 @@ const Index = () => {
         coverUrl={filteredPhotos[0]?.url}
         title={bookTitle}
         pageCount={totalPages}
-        onBack={() => setAppState("save")}
+        onBack={() => setAppState("main")}
         onComplete={() => setAppState("confirmed")}
       />
     );
