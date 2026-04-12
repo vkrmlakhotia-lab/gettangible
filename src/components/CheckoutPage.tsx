@@ -1,26 +1,26 @@
 import { useState } from "react";
-import { ChevronLeft, Lock } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ChevronLeft, Lock, Trash2, Plus } from "lucide-react";
+import { CartItem } from "@/pages/Index";
 
 interface CheckoutPageProps {
-  coverUrl?: string;
-  title?: string;
-  pageCount: number;
+  items: CartItem[];
+  onRemoveItem: (id: string) => void;
+  onAddAnother: () => void;
   onBack: () => void;
   onComplete: () => void;
 }
 
-const CheckoutPage = ({ coverUrl, title, pageCount, onBack, onComplete }: CheckoutPageProps) => {
+const CheckoutPage = ({ items, onRemoveItem, onAddAnother, onBack, onComplete }: CheckoutPageProps) => {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [editingAddress, setEditingAddress] = useState(true);
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
 
-  const bookPrice = 24.0;
+  const booksTotal = items.reduce((sum, item) => sum + item.price, 0);
   const deliveryPrice = 3.99;
   const discount = promoApplied ? 0.0 : 0.0;
-  const total = bookPrice + deliveryPrice - discount;
+  const total = booksTotal + deliveryPrice - discount;
 
   const handleApplyPromo = () => {
     if (promoCode.trim()) {
@@ -40,16 +40,37 @@ const CheckoutPage = ({ coverUrl, title, pageCount, onBack, onComplete }: Checko
         </div>
 
         <div className="flex-1 px-5 py-5 space-y-5">
-          {/* Order item */}
-          <div className="flex items-center gap-3 p-3 border border-border rounded-xl">
-            <div className="w-12 h-16 rounded-md overflow-hidden bg-muted/20 flex-shrink-0">
-              {coverUrl && <img src={coverUrl} alt="" className="w-full h-full object-cover" />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">{title || "My Photobook"}</p>
-              <p className="text-xs text-muted-foreground">{pageCount} pages · Matte · Classic</p>
-              <p className="text-sm font-semibold text-[hsl(var(--tangible-orange))] mt-0.5">£{bookPrice.toFixed(2)}</p>
-            </div>
+          {/* Order items */}
+          <div className="space-y-2.5">
+            {items.map((item) => (
+              <div key={item.id} className="flex items-center gap-3 p-3 border border-border rounded-xl">
+                <div className="w-12 h-16 rounded-md overflow-hidden bg-muted/20 flex-shrink-0">
+                  {item.coverUrl && <img src={item.coverUrl} alt="" className="w-full h-full object-cover" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{item.title || "My Photobook"}</p>
+                  <p className="text-xs text-muted-foreground">{item.pageCount} pages · Matte · Classic</p>
+                  <p className="text-sm font-semibold text-[hsl(var(--tangible-orange))] mt-0.5">£{item.price.toFixed(2)}</p>
+                </div>
+                {items.length > 1 && (
+                  <button
+                    onClick={() => onRemoveItem(item.id)}
+                    className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+
+            {/* Add another book */}
+            <button
+              onClick={onAddAnother}
+              className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-border hover:border-[hsl(var(--tangible-teal))] hover:bg-[hsl(var(--tangible-teal))]/5 transition-colors"
+            >
+              <Plus className="w-4 h-4 text-[hsl(var(--tangible-teal))]" />
+              <span className="text-sm text-[hsl(var(--tangible-teal))] font-medium">Add another book</span>
+            </button>
           </div>
 
           {/* Delivery address */}
@@ -97,10 +118,12 @@ const CheckoutPage = ({ coverUrl, title, pageCount, onBack, onComplete }: Checko
           <div>
             <h3 className="text-xs font-medium text-[hsl(var(--tangible-orange))] mb-2">Order Summary</h3>
             <div className="space-y-2.5">
-              <div className="flex justify-between text-sm">
-                <span className="text-foreground">Photo book ({pageCount}pp)</span>
-                <span className="text-foreground font-medium">£{bookPrice.toFixed(2)}</span>
-              </div>
+              {items.map((item, i) => (
+                <div key={item.id} className="flex justify-between text-sm">
+                  <span className="text-foreground">{items.length > 1 ? `Book ${i + 1}` : "Photo book"} ({item.pageCount}pp)</span>
+                  <span className="text-foreground font-medium">£{item.price.toFixed(2)}</span>
+                </div>
+              ))}
               <div className="flex justify-between text-sm">
                 <span className="text-foreground">Standard delivery (5-7 days)</span>
                 <span className="text-foreground font-medium">£{deliveryPrice.toFixed(2)}</span>
