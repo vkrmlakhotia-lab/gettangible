@@ -3,19 +3,20 @@ import { toast } from "sonner";
 
 interface SaveBookScreenProps {
   onSkip: () => void;
+  onSignIn: () => void;
   onBack: () => void;
   coverUrl?: string;
   title?: string;
   subtitle?: string;
 }
 
-const SaveBookScreen = ({ onSkip, onBack, coverUrl, title, subtitle }: SaveBookScreenProps) => {
+const SaveBookScreen = ({ onSkip, onSignIn, onBack, coverUrl, title, subtitle }: SaveBookScreenProps) => {
   const handleApple = () => {
-    toast("Apple sign-in coming soon");
+    onSignIn();
   };
 
   const handleGoogle = () => {
-    toast("Google sign-in coming soon");
+    onSignIn();
   };
 
   return (
