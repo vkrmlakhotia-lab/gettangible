@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.tangible.app',
+  appId: 'com.vikramaditya.tangible',
   appName: 'Tangible',
   webDir: 'dist',
   server: {

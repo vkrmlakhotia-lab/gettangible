@@ -198,6 +198,8 @@ const ApplePhotosImport = ({ onImport }: Props) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const fileRef = useRef<HTMLInputElement>(null)
+  const dateFromRef = useRef<HTMLInputElement>(null)
+  const dateToRef = useRef<HTMLInputElement>(null)
 
   // ── Permission request (native-aware) ────────────────────────────────────
 
@@ -647,22 +649,31 @@ const ApplePhotosImport = ({ onImport }: Props) => {
             <div>
               <label className="text-xs text-muted-foreground font-medium uppercase tracking-wider">From</label>
               <input
+                ref={dateFromRef}
                 type="date"
                 value={dateFrom || (minDate ? fmt(minDate) : '')}
                 min={minDate ? fmt(minDate) : undefined}
                 max={maxDate ? fmt(maxDate) : undefined}
-                onChange={e => setDateFrom(e.target.value)}
+                onChange={e => {
+                  setDateFrom(e.target.value)
+                  dateFromRef.current?.blur()
+                  setTimeout(() => dateToRef.current?.focus(), 100)
+                }}
                 className="w-full mt-1.5 h-12 px-4 bg-card rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
             <div>
               <label className="text-xs text-muted-foreground font-medium uppercase tracking-wider">To</label>
               <input
+                ref={dateToRef}
                 type="date"
                 value={dateTo || (maxDate ? fmt(maxDate) : '')}
                 min={minDate ? fmt(minDate) : undefined}
                 max={maxDate ? fmt(maxDate) : undefined}
-                onChange={e => setDateTo(e.target.value)}
+                onChange={e => {
+                  setDateTo(e.target.value)
+                  dateToRef.current?.blur()
+                }}
                 className="w-full mt-1.5 h-12 px-4 bg-card rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
