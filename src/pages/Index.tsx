@@ -120,7 +120,16 @@ const Index = () => {
   }
 
   if (appState === "save") {
-    return <SaveBookScreen onSkip={() => setAppState("checkout")} onBack={() => setAppState("main")} coverUrl={filteredPhotos[0]?.url} title={bookTitle} subtitle={bookSubtitle} />;
+    return (
+      <SaveBookScreen
+        onSkip={() => setAppState("checkout")}
+        onSignIn={() => { setIsSignedIn(true); setAppState("checkout"); }}
+        onBack={() => setAppState("main")}
+        coverUrl={filteredPhotos[0]?.url}
+        title={bookTitle}
+        subtitle={bookSubtitle}
+      />
+    );
   }
 
   if (appState === "checkout") {
