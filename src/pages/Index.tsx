@@ -141,7 +141,7 @@ const Index = () => {
         pageCount={totalPages}
         total={27.99}
         onViewOrders={() => setAppState("tracking")}
-        onBackHome={() => setAppState("main")}
+        onBackHome={() => setAppState("dates")}
       />
     );
   }
