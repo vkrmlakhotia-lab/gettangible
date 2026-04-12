@@ -1,4 +1,6 @@
 import { useState, useCallback } from "react";
+import { useAuth } from '@/context/AuthContext';
+import SignInSheet from '@/components/SignInSheet';
 import { Plus, LayoutGrid, ArrowLeftRight, ChevronUp, ChevronDown } from "lucide-react";
 import { PhotoEvent, Photo } from "@/data/samplePhotos";
 import { cn } from "@/lib/utils";
@@ -489,6 +491,9 @@ const PhotobookPreview = ({ events, title, subtitle, onTitleChange, onSubtitleCh
   const [blankPages, setBlankPages] = useState<number[]>([]);
   const [spreadOrder, setSpreadOrder] = useState<number[] | null>(null);
 
+  const { isAuthenticated } = useAuth();
+  const [showSignIn, setShowSignIn] = useState(false);
+
   // Derive ordered indices
   const orderedIndices = spreadOrder || events.map((_, i) => i);
   const allPhotos = events.flatMap((e) => e.photos);
@@ -600,6 +605,24 @@ const PhotobookPreview = ({ events, title, subtitle, onTitleChange, onSubtitleCh
       })}
 
       <EndSpread />
+
+      {/* Order / sign-in CTA */}
+      <div className="px-1 pt-2 pb-4">
+        {isAuthenticated ? (
+          <button className="w-full py-4 rounded-2xl bg-[#f8961e] text-white font-semibold text-base hover:opacity-90 transition-opacity">
+            Order Now
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowSignIn(true)}
+            className="w-full py-4 rounded-2xl bg-[#577590] text-white font-semibold text-base hover:opacity-90 transition-opacity"
+          >
+            Sign in to save your progress
+          </button>
+        )}
+      </div>
+
+      <SignInSheet isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
     </div>
   );
 };
