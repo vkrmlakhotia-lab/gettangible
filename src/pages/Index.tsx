@@ -1,274 +1,34 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
-import { ChevronLeft } from "lucide-react";
-import confetti from "canvas-confetti";
-import { arrayMove } from "@dnd-kit/sortable";
-import SplashScreen from "@/components/SplashScreen";
-import OnboardingScreens from "@/components/OnboardingScreens";
-import SaveBookScreen from "@/components/SaveBookScreen";
-import CheckoutPage from "@/components/CheckoutPage";
-import OrderConfirmation from "@/components/OrderConfirmation";
-import OrderTracking from "@/components/OrderTracking";
-import PhotoToggle from "@/components/PhotoToggle";
-import ShortlistedPhotos from "@/components/ShortlistedPhotos";
-import PhotobookPreview from "@/components/PhotobookPreview";
-import { samplePhotos, Photo, groupIntoEvents } from "@/data/samplePhotos";
-import { toast } from "sonner";
-
-export interface Filter {
-  id: string;
-  label: string;
-  count: number;
-  enabled: boolean;
-}
-
-export interface CartItem {
-  id: string;
-  title: string;
-  subtitle: string;
-  coverUrl?: string;
-  pageCount: number;
-  price: number;
-}
-
-const applyFilters = (photos: Photo[], filters: Filter[]): Photo[] => {
-  return photos.filter((p) => {
-    if (filters.find((f) => f.id === "screenshots")?.enabled && p.isScreenshot) return false;
-    if (filters.find((f) => f.id === "blurry")?.enabled && p.isBlurry) return false;
-    if (filters.find((f) => f.id === "duplicates")?.enabled && p.isDuplicate) return false;
-    if (!filters.find((f) => f.id === "selfies")?.enabled && p.isSelfie) return false;
-    return true;
-  });
-};
-
-type AppState = "splash" | "onboarding" | "celebrate" | "main" | "save" | "checkout" | "confirmed" | "tracking" | "dates";
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 const Index = () => {
-  const [appState, setAppState] = useState<AppState>("splash");
-  const [isSignedIn, setIsSignedIn] = useState(false);
-  const [activeTab, setActiveTab] = useState<"shortlisted" | "preview">("preview");
-  const [photos, setPhotos] = useState<Photo[]>(samplePhotos);
-  const [bookTitle, setBookTitle] = useState("Our Trip to Greece");
-  const [bookSubtitle, setBookSubtitle] = useState("April 2026");
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [filters, setFilters] = useState<Filter[]>([
-    { id: "screenshots", label: "Remove screenshots", count: 0, enabled: false },
-    { id: "blurry", label: "Remove blurry photos", count: 0, enabled: false },
-    { id: "duplicates", label: "Remove near-duplicates", count: 0, enabled: false },
-    { id: "selfies", label: "Include selfies", count: 0, enabled: true },
-  ]);
+  const { isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
+  const [splashDone, setSplashDone] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-  const filtersWithCounts = useMemo(() => {
-    const counts: Record<string, number> = {
-      screenshots: photos.filter((p) => p.isScreenshot).length,
-      blurry: photos.filter((p) => p.isBlurry).length,
-      duplicates: photos.filter((p) => p.isDuplicate).length,
-      selfies: photos.filter((p) => p.isSelfie).length,
-    };
-    return filters.map((f) => ({ ...f, count: counts[f.id] || 0 }));
-  }, [photos, filters]);
-
-  const filteredPhotos = useMemo(() => applyFilters(photos, filters), [photos, filters]);
-  const events = useMemo(() => groupIntoEvents(filteredPhotos), [filteredPhotos]);
-  const totalPages = events.length * 2 + 4;
-
-  const toggleFilter = (id: string) => {
-    setFilters((prev) => prev.map((f) => (f.id === id ? { ...f, enabled: !f.enabled } : f)));
-  };
-
-  const handleRemove = (id: string) => {
-    setPhotos((prev) => prev.filter((p) => p.id !== id));
-    toast("Photo removed from shortlist");
-  };
-
-  const handleReorder = (oldIndex: number, newIndex: number) => {
-    const filteredIds = filteredPhotos.map((p) => p.id);
-    const movedId = filteredIds[oldIndex];
-    const targetId = filteredIds[newIndex];
-    setPhotos((prev) => {
-      const realOld = prev.findIndex((p) => p.id === movedId);
-      const realNew = prev.findIndex((p) => p.id === targetId);
-      if (realOld === -1 || realNew === -1) return prev;
-      return arrayMove(prev, realOld, realNew);
-    });
-  };
-
-  const handleAddToCart = () => {
-    const newItem: CartItem = {
-      id: crypto.randomUUID(),
-      title: bookTitle,
-      subtitle: bookSubtitle,
-      coverUrl: filteredPhotos[0]?.url,
-      pageCount: totalPages,
-      price: 24.0,
-    };
-    setCart((prev) => [...prev, newItem]);
-    setAppState(isSignedIn ? "checkout" : "save");
-  };
-
-  const handleAddAnotherBook = () => {
-    setAppState("dates");
-  };
-
-  const handleRemoveFromCart = (id: string) => {
-    setCart((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const handleAddPhotos = () => toast("Add photos flow coming soon");
-  const handleSplashComplete = useCallback(() => setAppState("onboarding"), []);
-  const handleOnboardingComplete = useCallback(() => setAppState("celebrate"), []);
-
-  // Confetti celebration
   useEffect(() => {
-    if (appState !== "celebrate") return;
-    const colors = ["#f8961e", "#43aa8b", "#f9c74f", "#90be6d", "#577590"];
-    const end = Date.now() + 2000;
-    const frame = () => {
-      confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0, y: 0.6 }, colors });
-      confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1, y: 0.6 }, colors });
-      if (Date.now() < end) requestAnimationFrame(frame);
-    };
-    frame();
-    confetti({ particleCount: 100, spread: 100, origin: { y: 0.5 }, colors });
-    const timer = setTimeout(() => setAppState("main"), 2500);
-    return () => clearTimeout(timer);
-  }, [appState]);
+    const fallback = setTimeout(() => setSplashDone(true), 5000);
+    return () => clearTimeout(fallback);
+  }, []);
 
-  const deliveryPrice = 3.99;
-  const cartTotal = cart.reduce((sum, item) => sum + item.price, 0) + deliveryPrice;
-
-  // Screens
-  if (appState === "splash") return <SplashScreen onComplete={handleSplashComplete} />;
-  if (appState === "onboarding") return <OnboardingScreens onComplete={handleOnboardingComplete} />;
-  if (appState === "dates") return <OnboardingScreens onComplete={handleOnboardingComplete} initialStep="dates" onBack={() => setAppState("main")} />;
-
-  if (appState === "celebrate") {
-    return (
-      <div className="fixed inset-0 z-40 bg-background flex flex-col items-center justify-center px-8">
-        <div className="text-center space-y-3 animate-scale-in">
-          <div className="text-4xl">🎉</div>
-          <h2 className="text-xl font-semibold text-foreground">Your book is ready!</h2>
-          <p className="text-sm text-muted-foreground">We found your best photos and created a photobook.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (appState === "save") {
-    return (
-      <SaveBookScreen
-        onSkip={() => setAppState("checkout")}
-        onSignIn={() => { setIsSignedIn(true); setAppState("checkout"); }}
-        onBack={() => setAppState("main")}
-        coverUrl={filteredPhotos[0]?.url}
-        title={bookTitle}
-        subtitle={bookSubtitle}
-      />
-    );
-  }
-
-  if (appState === "checkout") {
-    return (
-      <CheckoutPage
-        items={cart}
-        onRemoveItem={handleRemoveFromCart}
-        onAddAnother={handleAddAnotherBook}
-        onBack={() => setAppState("main")}
-        onComplete={() => setAppState("confirmed")}
-      />
-    );
-  }
-
-  if (appState === "confirmed") {
-    return (
-      <OrderConfirmation
-        title={cart.length > 1 ? `${cart.length} Photobooks` : bookTitle}
-        pageCount={cart.reduce((sum, item) => sum + item.pageCount, 0)}
-        total={cartTotal}
-        onViewOrders={() => setAppState("tracking")}
-        onBackHome={() => { setCart([]); setAppState("dates"); }}
-      />
-    );
-  }
-
-  if (appState === "tracking") {
-    return (
-      <OrderTracking
-        coverUrl={filteredPhotos[0]?.url}
-        title={cart.length > 1 ? `${cart.length} Photobooks` : bookTitle}
-        total={cartTotal}
-        onBack={() => setAppState("confirmed")}
-      />
-    );
-  }
-
-  const bookPrice = 24.0;
-  const estimatedTotal = bookPrice + deliveryPrice;
+  useEffect(() => {
+    if (!splashDone || isLoading) return;
+    navigate(isAuthenticated ? '/home' : '/onboarding', { replace: true });
+  }, [splashDone, isAuthenticated, isLoading, navigate]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-md mx-auto px-4 py-6">
-        {/* Header with back button */}
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => setAppState("dates")}
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg font-semibold text-foreground">Your Photobook</h1>
-          <div className="w-5" />
-        </div>
-
-        {/* Cart badge */}
-        {cart.length > 0 && (
-          <button
-            onClick={() => setAppState(isSignedIn ? "checkout" : "save")}
-            className="mb-3 w-full flex items-center justify-between p-3 rounded-xl border border-[hsl(var(--tangible-teal))]/30 bg-[hsl(var(--tangible-teal))]/5"
-          >
-            <span className="text-xs text-foreground">
-              🛒 {cart.length} book{cart.length > 1 ? "s" : ""} in basket
-            </span>
-            <span className="text-xs font-semibold text-[hsl(var(--tangible-teal))]">
-              View basket →
-            </span>
-          </button>
-        )}
-
-        <PhotoToggle activeTab={activeTab} onTabChange={setActiveTab} />
-        <div className="mt-5">
-          {activeTab === "shortlisted" ? (
-            <ShortlistedPhotos
-              photos={filteredPhotos}
-              filters={filtersWithCounts}
-              onToggleFilter={toggleFilter}
-              onRemove={handleRemove}
-              onAddPhotos={handleAddPhotos}
-              onReorder={handleReorder}
-            />
-          ) : (
-            <PhotobookPreview
-              events={events}
-              title={bookTitle}
-              subtitle={bookSubtitle}
-              onTitleChange={setBookTitle}
-              onSubtitleChange={setBookSubtitle}
-            />
-          )}
-        </div>
-        <div className="sticky bottom-0 pt-3 pb-6 bg-gradient-to-t from-background via-background to-transparent">
-          {/* Price estimate */}
-          <div className="flex items-center justify-between mb-2 px-1">
-            <span className="text-xs text-muted-foreground">{totalPages} pages · Est. total</span>
-            <span className="text-sm font-semibold text-[hsl(var(--tangible-orange))]">£{estimatedTotal.toFixed(2)}</span>
-          </div>
-          <button
-            onClick={handleAddToCart}
-            className="w-full py-3.5 rounded-full bg-[hsl(var(--tangible-orange))] text-white font-medium text-sm hover:opacity-90 transition-opacity"
-          >
-            {cart.length > 0 ? "Add to Basket" : "Continue — £" + estimatedTotal.toFixed(2)}
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen relative overflow-hidden bg-black">
+      <video
+        ref={videoRef}
+        src="/tangible-splash-v6.mp4"
+        autoPlay
+        muted
+        playsInline
+        onEnded={() => setSplashDone(true)}
+        className="absolute inset-0 w-full h-full object-cover"
+      />
     </div>
   );
 };
