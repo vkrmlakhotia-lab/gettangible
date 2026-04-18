@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useBooks } from '@/context/BookContext'
 import { ChevronLeft, MapPin, Package } from 'lucide-react'
+import StripePaymentSheet from '@/components/StripePaymentSheet'
 
 const PRICE_PER_PAGE = 1.20
 const DELIVERY = 4.99
@@ -15,6 +16,7 @@ const Checkout = () => {
   const [ordering, setOrdering] = useState(false)
   const [ordered, setOrdered] = useState(false)
   const [orderNumber, setOrderNumber] = useState('')
+  const [paymentOpen, setPaymentOpen] = useState(false)
 
   useEffect(() => {
     if (id) setCurrentProject(id)
@@ -31,9 +33,15 @@ const Checkout = () => {
   const pageCount = currentProject.pages.length
   const subtotal = pageCount * PRICE_PER_PAGE
   const total = subtotal + DELIVERY
+  const amountPence = Math.round(total * 100)
 
-  const handleOrder = async () => {
+  const handleOrder = () => {
     if (!name || !address) return
+    setPaymentOpen(true)
+  }
+
+  const handlePaymentSuccess = async () => {
+    setPaymentOpen(false)
     setOrdering(true)
     try {
       const num = await markOrdered(currentProject.id)
@@ -129,12 +137,16 @@ const Checkout = () => {
           disabled={!name || !address || ordering}
           className="w-full bg-primary disabled:opacity-40 text-white rounded-[16px] py-4 text-[16px] font-semibold"
         >
-          {ordering ? 'Placing order…' : `Place Order · £${total.toFixed(2)}`}
+          {ordering ? 'Placing order…' : `Pay · £${total.toFixed(2)}`}
         </button>
-        <p className="text-[11px] text-muted-foreground text-center mt-2">
-          Payment coming soon — this is a preview order
-        </p>
       </div>
+
+      <StripePaymentSheet
+        open={paymentOpen}
+        onOpenChange={setPaymentOpen}
+        amountPence={amountPence}
+        onSuccess={handlePaymentSuccess}
+      />
     </div>
   )
 }
