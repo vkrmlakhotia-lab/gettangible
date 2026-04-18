@@ -38,6 +38,7 @@ export interface Database {
           ai_prompt: string | null
           created_at: string
           updated_at: string
+          ordered_at: string | null
         }
         Insert: {
           id?: string
@@ -61,6 +62,7 @@ export interface Database {
           share_link?: string | null
           ai_prompt?: string | null
           updated_at?: string
+          ordered_at?: string | null
         }
       }
       book_pages: {
@@ -149,6 +151,10 @@ export interface Database {
           tracking_number: string | null
           estimated_delivery: string | null
           ordered_at: string
+          prodigi_order_id: string | null
+          pdf_url: string | null
+          shipping_name: string | null
+          shipping_address: Record<string, string> | null
         }
         Insert: {
           id?: string
@@ -162,11 +168,17 @@ export interface Database {
           status?: 'processing' | 'printed' | 'shipped' | 'delivered'
           tracking_number?: string | null
           estimated_delivery?: string | null
+          prodigi_order_id?: string | null
+          pdf_url?: string | null
+          shipping_name?: string | null
+          shipping_address?: Record<string, string> | null
         }
         Update: {
           status?: 'processing' | 'printed' | 'shipped' | 'delivered'
           tracking_number?: string | null
           estimated_delivery?: string | null
+          prodigi_order_id?: string | null
+          pdf_url?: string | null
         }
       }
     }
