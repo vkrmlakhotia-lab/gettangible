@@ -19,6 +19,7 @@ interface BookContextType {
   deleteProject: (id: string) => Promise<void>
   markOrdered: (id: string) => Promise<string | null>
   clearCurrentProject: () => void
+  orderPlaced: (id: string) => void
   generateShareLink: (id: string) => Promise<string>
   addCollaborator: (name: string, email: string) => Promise<void>
 }
@@ -370,12 +371,17 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearCurrentProject = () => setCurrentProjectState(null)
 
+  const orderPlaced = (id: string) => {
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, status: 'ordered' as const } : p))
+    setCurrentProjectState(prev => prev?.id === id ? { ...prev, status: 'ordered' as const } : prev)
+  }
+
   return (
     <BookContext.Provider value={{
       projects, currentProject, isLoading, createProject, setCurrentProject,
       updatePage, addPage, removePage, reorderPages,
       updateProjectTitle, updateProjectSettings, deleteProject,
-      markOrdered, clearCurrentProject, generateShareLink, addCollaborator,
+      markOrdered, clearCurrentProject, orderPlaced, generateShareLink, addCollaborator,
     }}>
       {children}
     </BookContext.Provider>
