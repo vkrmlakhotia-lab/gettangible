@@ -35,6 +35,7 @@ function PaymentForm({
       setError(stripeError.message ?? 'Payment failed. Please try again.')
       setPaying(false)
     } else {
+      setPaying(false)
       onSuccess()
     }
   }
@@ -112,8 +113,8 @@ export default function StripePaymentSheet({
         if (data.error) throw new Error(data.error.message)
         setClientSecret(data.client_secret)
       })
-      .catch(() => setLoadError('Could not initialise payment. Please try again.'))
-  }, [open, amountPence])
+      .catch((err: Error) => setLoadError(err.message ?? 'Could not initialise payment. Please try again.'))
+  }, [open])
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
