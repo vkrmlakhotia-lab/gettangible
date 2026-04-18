@@ -121,6 +121,5 @@ def extract_recent_photos_with_metadata(count: int = 10) -> List[dict]:
     workflow = PhotoIntakeWorkflow(auto_approve=True)
     photos = workflow.extractor.get_recent_photos(count)
 
-    # For now, return empty list (metadata extraction TBD in next task)
-    # This is a placeholder for the AppleScript integration
-    return []
+    # Photos are already JSON-serializable dicts from AppleScript extraction
+    return photos

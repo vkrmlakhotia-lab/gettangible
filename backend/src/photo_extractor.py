@@ -37,24 +37,97 @@ class ApplePhotosExtractor:
         logger.info(f"Apple Photos library found: {self.library_path}")
         return True
 
-    def get_recent_photos(self, count: int = 10) -> List[Path]:
+    def get_recent_photos(self, count: int = 10) -> List[dict]:
         """
-        Get recent photos from Apple Photos.
+        Get recent photos from Apple Photos library with full metadata.
 
         Args:
             count: Number of recent photos to retrieve
 
         Returns:
-            List of photo paths (implementation pending)
-
-        Note:
-            This is a placeholder. Implementation requires:
-            - AppleScript integration or
-            - Photos app framework access or
-            - Direct library file parsing
+            List of dicts with photo metadata:
+            {
+                "id": "photo-uuid",
+                "path": "/path/to/photo.jpg",
+                "aestheticScore": 0.8,
+                "iconicScore": 0.6,
+                "promotionScore": 0.5,
+                "dateCreated": "2026-04-18T10:30:00Z",
+                "width": 4000,
+                "height": 3000,
+                "isFavorite": false,
+                "faceCount": 2,
+                "latitude": 51.5074,
+                "longitude": -0.1278
+            }
         """
-        logger.warning("get_recent_photos: Implementation pending - requires AppleScript or framework integration")
-        return []
+        # AppleScript to query Photos.app and output tab-separated data
+        applescript_code = f"""
+tell application "Photos"
+    set allPhotos to every media item
+    set photoCount to count of allPhotos
+
+    if photoCount > 0 then
+        set startIdx to photoCount - {count} + 1
+        if startIdx < 1 then
+            set startIdx to 1
+        end if
+
+        repeat with i from startIdx to photoCount
+            set photo to item i of allPhotos
+            set photoID to id of photo
+            set photoPath to filename of photo
+            set photoDate to date of photo
+            set photoFav to favorite of photo
+
+            log photoID & tab & photoPath & tab & (photoDate as text) & tab & (photoFav as text)
+        end repeat
+    end if
+end tell
+"""
+
+        output = self.run_applescript(applescript_code)
+        if not output:
+            logger.warning("AppleScript returned no photos")
+            return []
+
+        try:
+            # Parse tab-separated output (skip logging prefix)
+            result = []
+            for line in output.strip().split('\n'):
+                if not line.strip():
+                    continue
+
+                # AppleScript log output format: "2026-04-18 21:55:21,615 - photos - INFO - <content>"
+                # Extract the content after the last dash
+                if ' - ' in line:
+                    content = line.split(' - ')[-1]
+                else:
+                    content = line
+
+                parts = content.split('\t')
+                if len(parts) >= 4:
+                    photo_id = parts[0].strip()
+                    photo_path = parts[1].strip()
+                    photo_date = parts[2].strip()
+                    is_fav = parts[3].strip().lower() == 'true'
+
+                    result.append({
+                        "id": photo_id,
+                        "path": photo_path,
+                        "dateCreated": photo_date,
+                        "isFavorite": is_fav,
+                        "aestheticScore": 1.0,
+                        "iconicScore": 1.0,
+                        "promotionScore": 1.0,
+                    })
+
+            logger.info(f"Retrieved {len(result)} recent photos from Apple Photos")
+            return result
+        except Exception as e:
+            logger.error(f"Failed to parse AppleScript output: {e}")
+            logger.debug(f"Raw output: {output[:500] if output else 'empty'}")
+            return []
 
     def get_album_photos(self, album_name: str) -> List[Path]:
         """
@@ -87,7 +160,7 @@ class ApplePhotosExtractor:
             script: AppleScript code
 
         Returns:
-            Script output as string
+            Script output as string (from log statements, which go to stderr)
         """
         try:
             result = subprocess.run(
@@ -96,7 +169,8 @@ class ApplePhotosExtractor:
                 text=True,
                 check=True,
             )
-            return result.stdout.strip()
+            # AppleScript log output goes to stderr, not stdout
+            return result.stderr.strip()
         except subprocess.CalledProcessError as e:
             logger.error(f"AppleScript error: {e.stderr}")
             return ""

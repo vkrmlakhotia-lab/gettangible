@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent / "config"))
 
-from intake_workflow import PhotoIntakeWorkflow
+from intake_workflow import PhotoIntakeWorkflow, extract_recent_photos_with_metadata
 from logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -69,18 +69,16 @@ Examples:
     # Execute command
     try:
         if args.command == "recent":
-            logger.info(f"Intaking {args.count} recent photos")
-            result = workflow.intake_recent_photos(args.count)
-
             if args.output_json:
+                # Extract metadata without copying files
+                logger.info(f"Extracting metadata for {args.count} recent photos")
+                result = extract_recent_photos_with_metadata(args.count)
                 import json
-                # Convert to JSON-serializable format (tuples/objects → dicts)
-                json_result = [
-                    r.to_dict() if hasattr(r, 'to_dict') else r
-                    for r in result
-                ]
-                print(json.dumps(json_result))
+                print(json.dumps(result))
             else:
+                # Copy photos to intake folder
+                logger.info(f"Intaking {args.count} recent photos")
+                result = workflow.intake_recent_photos(args.count)
                 print(f"\n✓ Successfully copied {len(result)} photos")
 
         elif args.command == "album":
