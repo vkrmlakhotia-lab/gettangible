@@ -32,9 +32,15 @@ app.post('/api/import/recent', async (req, res) => {
     let photos = pythonResult.photos || [];
     photos = photos.filter(p => (p.aestheticScore || 0) >= minAestheticScore);
 
-    // Detect duplicates (TBD - for now return as-is)
+    // Detect duplicates via Python
     if (detectDuplicates) {
-      // TODO: Implement duplicate detection
+      const detectResult = await callPythonDuplicateDetection(photos);
+      if (detectResult.success) {
+        photos = detectResult.photos;
+      } else {
+        // Log warning but don't fail the entire request
+        console.warn('Duplicate detection failed:', detectResult.error);
+      }
     }
 
     res.json({
@@ -66,6 +72,56 @@ function callPythonExtractor(command, options) {
     let stderr = '';
 
     // Handle spawn errors (e.g., Python not found, permission denied)
+    python.on('error', (err) => {
+      resolve({ success: false, error: `Failed to spawn Python: ${err.message}` });
+    });
+
+    python.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    python.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    python.on('close', (code) => {
+      if (code === 0) {
+        try {
+          const result = JSON.parse(stdout);
+          resolve({ success: true, photos: result });
+        } catch (e) {
+          const errorMsg = stderr || `JSON parse error: ${e.message}`;
+          resolve({ success: false, error: errorMsg });
+        }
+      } else {
+        resolve({ success: false, error: stderr || `Python exited with code ${code}` });
+      }
+    });
+  });
+}
+
+/**
+ * Helper: Call Python duplicate detection on photos
+ * Spawns a small Python subprocess to run the detect_duplicates function
+ */
+function callPythonDuplicateDetection(photos) {
+  return new Promise((resolve) => {
+    const script = path.join(__dirname, 'src', 'filters.py');
+    const pythonCode = `
+import sys
+import json
+sys.path.insert(0, '${__dirname}/src')
+from filters import detect_duplicates
+
+photos_json = json.loads('''${JSON.stringify(photos)}''')
+result = detect_duplicates(photos_json)
+print(json.dumps(result))
+`;
+
+    const python = spawn('python3', ['-c', pythonCode], { cwd: __dirname });
+    let stdout = '';
+    let stderr = '';
+
     python.on('error', (err) => {
       resolve({ success: false, error: `Failed to spawn Python: ${err.message}` });
     });
