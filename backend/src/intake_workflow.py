@@ -91,3 +91,36 @@ class PhotoIntakeWorkflow:
             Dictionary with intake statistics
         """
         return self.file_manager.get_intake_stats()
+
+
+def extract_recent_photos_with_metadata(count: int = 10) -> List[dict]:
+    """
+    Extract recent photos with full metadata (no file copying).
+    Returns JSON-serializable dicts, not Path objects.
+
+    Args:
+        count: Number of recent photos to extract
+
+    Returns:
+        List of dicts with photo metadata:
+        {
+            "id": "uuid-from-apple-photos",
+            "path": "/path/to/photo",
+            "aestheticScore": 0.8,
+            "iconicScore": 0.6,
+            "promotionScore": 0.5,
+            "dateCreated": "2026-04-18T10:30:00Z",
+            "width": 4000,
+            "height": 3000,
+            "isFavorite": false,
+            "faceCount": 2,
+            "latitude": 51.5074,
+            "longitude": -0.1278
+        }
+    """
+    workflow = PhotoIntakeWorkflow(auto_approve=True)
+    photos = workflow.extractor.get_recent_photos(count)
+
+    # For now, return empty list (metadata extraction TBD in next task)
+    # This is a placeholder for the AppleScript integration
+    return []

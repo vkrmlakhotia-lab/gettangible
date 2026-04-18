@@ -1,0 +1,17 @@
+{
+  "name": "tangible-photos-backend",
+  "version": "1.0.0",
+  "description": "Node wrapper for Apple Photos extraction pipeline",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.0.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
