@@ -65,6 +65,11 @@ function callPythonExtractor(command, options) {
     let stdout = '';
     let stderr = '';
 
+    // Handle spawn errors (e.g., Python not found, permission denied)
+    python.on('error', (err) => {
+      resolve({ success: false, error: `Failed to spawn Python: ${err.message}` });
+    });
+
     python.stdout.on('data', (data) => {
       stdout += data.toString();
     });
@@ -79,7 +84,8 @@ function callPythonExtractor(command, options) {
           const result = JSON.parse(stdout);
           resolve({ success: true, photos: result });
         } catch (e) {
-          resolve({ success: false, error: 'Invalid JSON from Python: ' + e.message });
+          const errorMsg = stderr || `JSON parse error: ${e.message}`;
+          resolve({ success: false, error: errorMsg });
         }
       } else {
         resolve({ success: false, error: stderr || `Python exited with code ${code}` });
