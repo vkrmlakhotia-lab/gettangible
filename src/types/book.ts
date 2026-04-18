@@ -1,8 +1,52 @@
 export interface BookPhoto {
-  id: string;
+  id: string; // Apple Photos UUID
   url: string;
   storagePath?: string;
   file?: File;
+
+  // Quality & Aesthetic Metadata
+  aestheticScore?: number; // ZOVERALLAESTHETICSCORE (0-1, higher = better quality)
+  iconicScore?: number; // ZICONICSCORE (0-1, how memorable/special Apple thinks it is)
+  promotionScore?: number; // ZPROMOTIONSCORE (0-1, recommended for Memories)
+
+  // Photo Type & Format
+  kind?: number; // 0 = photo, 1 = video
+  fileFormat?: string; // ZUNIFORMTYPEIDENTIFIER (e.g., "public.jpeg", "com.apple.quicktime-movie")
+  duration?: number; // ZDURATION in seconds (0 for photos, >0 for videos)
+
+  // Location Metadata
+  latitude?: number; // ZLATITUDE
+  longitude?: number; // ZLONGITUDE
+
+  // Temporal Metadata
+  dateCreated?: string; // ZDATECREATED (when photo was taken)
+  dateAdded?: string; // ZADDEDDATE (when imported to Photos)
+
+  // Image Properties
+  width?: number;
+  height?: number;
+  orientation?: number; // 1 = normal, others = rotated
+
+  // Detection & Analysis
+  faceCount?: number; // ZFACEAREAPOINTS (number of detected faces/people)
+  depthType?: number; // ZDEPTHTYPE (0 = none, 1 = portrait mode, etc.)
+  hasHDR?: boolean; // ZHDRGAIN
+
+  // User & System Metadata
+  isFavorite?: boolean; // ZFAVORITE
+  isHidden?: boolean; // ZHIDDEN
+  isScreenshot?: boolean; // ZISDETECTEDSCREENSHOT
+  isTrashedState?: number; // ZTRASHEDSTATE
+
+  // Sync & Availability
+  cloudLocalState?: number; // ZCLOUDLOCALSTATE (0 = available, 1 = downloading, etc.)
+  isComplete?: boolean; // ZCOMPLETE (processing status)
+  cloudIsMyAsset?: boolean; // ZCLOUDISMYASSET (personal vs shared)
+
+  // Duplicate Detection
+  duplicateMetadataMatchingAlbum?: string; // ZDUPLICATEMETADATAMATCHINGALBUM
+
+  // UI State (not from Apple Photos)
   isLowRes?: boolean;
   isDuplicate?: boolean;
 }

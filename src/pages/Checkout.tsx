@@ -8,14 +8,15 @@ import { ChevronLeft, MapPin, Package, Search, Loader2 } from 'lucide-react'
 
 type CheckoutState = 'idle' | 'rendering' | 'uploading' | 'submitting' | 'success' | 'error'
 
-const BASE_PRICE = 18.28
-const PER_PAGE = 0.33
-const SHIPPING = 14.80
 const BASE_PAGES = 24
+const BASE_PRICE = 10.50 // 24 pages
+const EXTRA_PAGE_PRICE = 0.21
+const SHIPPING = 6.00
 
 function estimatePrice(pageCount: number): number {
-  const extra = Math.max(0, pageCount - BASE_PAGES)
-  return BASE_PRICE + extra * PER_PAGE + SHIPPING
+  const pagesNeeded = Math.max(BASE_PAGES, pageCount)
+  const extraPages = pagesNeeded - BASE_PAGES
+  return BASE_PRICE + extraPages * EXTRA_PAGE_PRICE + SHIPPING
 }
 
 const Checkout = () => {
