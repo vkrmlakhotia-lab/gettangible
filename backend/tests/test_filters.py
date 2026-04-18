@@ -1,310 +1,189 @@
-"""Unit tests for photo filtering and duplicate detection."""
+"""Unit tests for PHAsset-compatible photo filtering."""
 
 import pytest
 from pathlib import Path
 import sys
 
-# Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from filters import filter_by_aesthetic_score, detect_duplicates, _haversine_distance
+from filters import (
+    filter_videos,
+    filter_screenshots,
+    filter_low_resolution,
+    deduplicate_bursts,
+    apply_standard_filters,
+    _haversine_distance,
+    MEDIA_TYPE_IMAGE,
+    MEDIA_TYPE_VIDEO,
+    SUBTYPE_SCREENSHOT,
+    SUBTYPE_DEPTH_EFFECT,
+)
 
 
-class TestFilterByAestheticScore:
-    """Tests for aesthetic score filtering."""
-
-    def test_filter_by_score_above_threshold(self):
-        """Photos above threshold are included."""
+class TestFilterVideos:
+    def test_removes_videos(self):
         photos = [
-            {"id": "1", "aestheticScore": 0.8},
-            {"id": "2", "aestheticScore": 0.4},
-            {"id": "3", "aestheticScore": 0.9},
+            {"id": "1", "mediaType": MEDIA_TYPE_IMAGE},
+            {"id": "2", "mediaType": MEDIA_TYPE_VIDEO},
+            {"id": "3", "mediaType": MEDIA_TYPE_IMAGE},
         ]
+        result = filter_videos(photos)
+        assert [p["id"] for p in result] == ["1", "3"]
 
-        result = filter_by_aesthetic_score(photos, min_score=0.5)
-
-        assert len(result) == 2
-        assert result[0]["id"] == "1"
-        assert result[1]["id"] == "3"
-
-    def test_filter_by_score_no_match(self):
-        """Returns empty list when no photos meet threshold."""
-        photos = [
-            {"id": "1", "aestheticScore": 0.3},
-            {"id": "2", "aestheticScore": 0.2},
-        ]
-
-        result = filter_by_aesthetic_score(photos, min_score=0.5)
-
-        assert len(result) == 0
-
-    def test_filter_by_score_default_threshold(self):
-        """Uses 0.5 as default threshold."""
-        photos = [
-            {"id": "1", "aestheticScore": 0.5},
-            {"id": "2", "aestheticScore": 0.49},
-        ]
-
-        result = filter_by_aesthetic_score(photos)
-
+    def test_defaults_to_image_when_missing(self):
+        photos = [{"id": "1"}, {"id": "2", "mediaType": MEDIA_TYPE_VIDEO}]
+        result = filter_videos(photos)
         assert len(result) == 1
         assert result[0]["id"] == "1"
 
-    def test_filter_by_score_missing_field(self):
-        """Treats missing aestheticScore as 0."""
+    def test_empty_list(self):
+        assert filter_videos([]) == []
+
+
+class TestFilterScreenshots:
+    def test_removes_screenshots(self):
         photos = [
-            {"id": "1"},  # No aestheticScore
-            {"id": "2", "aestheticScore": 0.8},
+            {"id": "1", "mediaSubtypes": 0},
+            {"id": "2", "mediaSubtypes": SUBTYPE_SCREENSHOT},        # screenshot
+            {"id": "3", "mediaSubtypes": SUBTYPE_DEPTH_EFFECT},      # portrait mode, not screenshot
         ]
+        result = filter_screenshots(photos)
+        assert [p["id"] for p in result] == ["1", "3"]
 
-        result = filter_by_aesthetic_score(photos, min_score=0.5)
+    def test_removes_screenshot_combined_with_other_flags(self):
+        # screenshot (4) | HDR (2) = 6
+        photos = [{"id": "1", "mediaSubtypes": SUBTYPE_SCREENSHOT | 2}]
+        result = filter_screenshots(photos)
+        assert result == []
 
+    def test_keeps_portrait_mode_photos(self):
+        photos = [{"id": "1", "mediaSubtypes": SUBTYPE_DEPTH_EFFECT}]
+        result = filter_screenshots(photos)
+        assert len(result) == 1
+
+    def test_defaults_to_zero_when_missing(self):
+        photos = [{"id": "1"}]
+        result = filter_screenshots(photos)
+        assert len(result) == 1
+
+    def test_empty_list(self):
+        assert filter_screenshots([]) == []
+
+
+class TestFilterLowResolution:
+    def test_removes_below_threshold(self):
+        photos = [
+            {"id": "1", "width": 4000, "height": 3000},  # 12 MP — pass
+            {"id": "2", "width": 640, "height": 480},    # 0.3 MP — fail
+            {"id": "3", "width": 1920, "height": 1080},  # 2 MP — pass
+        ]
+        result = filter_low_resolution(photos, min_megapixels=1.0)
+        assert [p["id"] for p in result] == ["1", "3"]
+
+    def test_exactly_at_threshold_passes(self):
+        # 1000 x 1000 = 1 MP exactly
+        photos = [{"id": "1", "width": 1000, "height": 1000}]
+        result = filter_low_resolution(photos, min_megapixels=1.0)
+        assert len(result) == 1
+
+    def test_missing_dimensions_excluded(self):
+        photos = [{"id": "1"}]
+        result = filter_low_resolution(photos, min_megapixels=1.0)
+        assert result == []
+
+    def test_default_threshold_is_one_megapixel(self):
+        photos = [
+            {"id": "1", "width": 1000, "height": 1000},  # 1 MP — pass
+            {"id": "2", "width": 500, "height": 500},     # 0.25 MP — fail
+        ]
+        result = filter_low_resolution(photos)
+        assert len(result) == 1
+        assert result[0]["id"] == "1"
+
+    def test_empty_list(self):
+        assert filter_low_resolution([]) == []
+
+
+class TestDeduplicateBursts:
+    def test_keeps_first_of_each_burst(self):
+        photos = [
+            {"id": "1", "burstIdentifier": "burst-a"},
+            {"id": "2", "burstIdentifier": "burst-a"},
+            {"id": "3", "burstIdentifier": "burst-b"},
+        ]
+        result = deduplicate_bursts(photos)
+        ids = [p["id"] for p in result]
+        assert "1" in ids
+        assert "2" not in ids
+        assert "3" in ids
+
+    def test_prefers_favorite_within_burst(self):
+        photos = [
+            {"id": "1", "burstIdentifier": "burst-a", "isFavorite": False},
+            {"id": "2", "burstIdentifier": "burst-a", "isFavorite": True},
+            {"id": "3", "burstIdentifier": "burst-a", "isFavorite": False},
+        ]
+        result = deduplicate_bursts(photos)
         assert len(result) == 1
         assert result[0]["id"] == "2"
 
-    def test_filter_by_score_empty_list(self):
-        """Handles empty input gracefully."""
-        result = filter_by_aesthetic_score([], min_score=0.5)
-        assert result == []
-
-
-class TestDetectDuplicates:
-    """Tests for duplicate detection."""
-
-    def test_detect_duplicates_with_matching_album(self):
-        """Photos with duplicateMetadataMatchingAlbum are marked as duplicates."""
+    def test_photos_without_burst_id_all_kept(self):
         photos = [
-            {"id": "1", "duplicateMetadataMatchingAlbum": None},
-            {"id": "2", "duplicateMetadataMatchingAlbum": "album-x"},
+            {"id": "1"},
+            {"id": "2"},
+            {"id": "3"},
         ]
+        result = deduplicate_bursts(photos)
+        assert len(result) == 3
 
-        result = detect_duplicates(photos)
-
-        assert result[0]["isDuplicate"] is False
-        assert result[1]["isDuplicate"] is True
-
-    def test_detect_duplicates_same_location_close_time(self):
-        """Photos at same location taken within 5 seconds are marked as duplicates."""
+    def test_mixed_burst_and_non_burst(self):
         photos = [
-            {
-                "id": "1",
-                "latitude": 51.5074,
-                "longitude": -0.1278,
-                "dateCreated": "2026-04-18T10:30:00Z",
-            },
-            {
-                "id": "2",
-                "latitude": 51.5074,
-                "longitude": -0.1278,
-                "dateCreated": "2026-04-18T10:30:03Z",  # 3 seconds later
-            },
+            {"id": "1"},
+            {"id": "2", "burstIdentifier": "burst-a"},
+            {"id": "3", "burstIdentifier": "burst-a"},
         ]
+        result = deduplicate_bursts(photos)
+        assert len(result) == 2
 
-        result = detect_duplicates(photos)
+    def test_empty_list(self):
+        assert deduplicate_bursts([]) == []
 
-        assert result[0]["isDuplicate"] is False
-        assert result[1]["isDuplicate"] is True
 
-    def test_detect_duplicates_same_location_far_time(self):
-        """Photos at same location but far apart in time are not duplicates."""
+class TestApplyStandardFilters:
+    def test_full_pipeline_removes_videos_screenshots_lowres_and_deduplicates(self):
         photos = [
-            {
-                "id": "1",
-                "latitude": 51.5074,
-                "longitude": -0.1278,
-                "dateCreated": "2026-04-18T10:30:00Z",
-            },
-            {
-                "id": "2",
-                "latitude": 51.5074,
-                "longitude": -0.1278,
-                "dateCreated": "2026-04-18T10:30:10Z",  # 10 seconds later (beyond 5s threshold)
-            },
+            {"id": "ok",        "mediaType": 1, "mediaSubtypes": 0, "width": 4000, "height": 3000},
+            {"id": "video",     "mediaType": 2, "mediaSubtypes": 0, "width": 4000, "height": 3000},
+            {"id": "screenshot","mediaType": 1, "mediaSubtypes": 4, "width": 4000, "height": 3000},
+            {"id": "lowres",    "mediaType": 1, "mediaSubtypes": 0, "width": 640,  "height": 480},
+            {"id": "burst1",    "mediaType": 1, "mediaSubtypes": 0, "width": 4000, "height": 3000, "burstIdentifier": "b"},
+            {"id": "burst2",    "mediaType": 1, "mediaSubtypes": 0, "width": 4000, "height": 3000, "burstIdentifier": "b"},
         ]
+        result = apply_standard_filters(photos)
+        ids = [p["id"] for p in result]
+        assert "ok" in ids
+        assert "video" not in ids
+        assert "screenshot" not in ids
+        assert "lowres" not in ids
+        assert "burst2" not in ids
+        assert len(result) == 2
 
-        result = detect_duplicates(photos)
-
-        assert result[0]["isDuplicate"] is False
-        assert result[1]["isDuplicate"] is False
-
-    def test_detect_duplicates_different_location_close_time(self):
-        """Photos at different locations are not marked as duplicates."""
+    def test_include_videos_option(self):
         photos = [
-            {
-                "id": "1",
-                "latitude": 51.5074,
-                "longitude": -0.1278,
-                "dateCreated": "2026-04-18T10:30:00Z",
-            },
-            {
-                "id": "2",
-                "latitude": 51.5074,
-                "longitude": -0.1200,  # Different longitude (several meters away)
-                "dateCreated": "2026-04-18T10:30:02Z",
-            },
+            {"id": "1", "mediaType": 2, "mediaSubtypes": 0, "width": 1920, "height": 1080},
         ]
-
-        result = detect_duplicates(photos)
-
-        assert result[0]["isDuplicate"] is False
-        assert result[1]["isDuplicate"] is False
-
-    def test_detect_duplicates_missing_location(self):
-        """Photos without location data are not marked as duplicates."""
-        photos = [
-            {
-                "id": "1",
-                "dateCreated": "2026-04-18T10:30:00Z",
-            },
-            {
-                "id": "2",
-                "latitude": 51.5074,
-                "longitude": -0.1278,
-                "dateCreated": "2026-04-18T10:30:01Z",
-            },
-        ]
-
-        result = detect_duplicates(photos)
-
-        assert result[0]["isDuplicate"] is False
-        assert result[1]["isDuplicate"] is False
-
-    def test_detect_duplicates_missing_time(self):
-        """Photos without time data are not marked as duplicates."""
-        photos = [
-            {
-                "id": "1",
-                "latitude": 51.5074,
-                "longitude": -0.1278,
-            },
-            {
-                "id": "2",
-                "latitude": 51.5074,
-                "longitude": -0.1278,
-                "dateCreated": "2026-04-18T10:30:01Z",
-            },
-        ]
-
-        result = detect_duplicates(photos)
-
-        assert result[0]["isDuplicate"] is False
-        assert result[1]["isDuplicate"] is False
-
-    def test_detect_duplicates_preserves_other_fields(self):
-        """Duplicate detection preserves all other photo fields."""
-        photos = [
-            {
-                "id": "1",
-                "name": "photo1.jpg",
-                "aestheticScore": 0.8,
-                "latitude": 51.5074,
-                "longitude": -0.1278,
-                "dateCreated": "2026-04-18T10:30:00Z",
-            },
-        ]
-
-        result = detect_duplicates(photos)
-
-        assert result[0]["id"] == "1"
-        assert result[0]["name"] == "photo1.jpg"
-        assert result[0]["aestheticScore"] == 0.8
-        assert "isDuplicate" in result[0]
-
-    def test_detect_duplicates_empty_list(self):
-        """Handles empty input gracefully."""
-        result = detect_duplicates([])
-        assert result == []
-
-    def test_detect_duplicates_single_photo(self):
-        """Single photo cannot be a duplicate."""
-        photos = [
-            {
-                "id": "1",
-                "latitude": 51.5074,
-                "longitude": -0.1278,
-                "dateCreated": "2026-04-18T10:30:00Z",
-            },
-        ]
-
-        result = detect_duplicates(photos)
-
-        assert result[0]["isDuplicate"] is False
+        result = apply_standard_filters(photos, include_videos=True)
+        assert len(result) == 1
 
 
 class TestHaversineDistance:
-    """Tests for geographic distance calculation."""
+    def test_same_point_is_zero(self):
+        assert _haversine_distance(51.5074, -0.1278, 51.5074, -0.1278) < 1
 
-    def test_haversine_distance_same_point(self):
-        """Distance between same point is 0."""
-        distance = _haversine_distance(51.5074, -0.1278, 51.5074, -0.1278)
-        assert distance < 1  # Allow tiny floating point error
+    def test_london_to_paris_approx_340km(self):
+        dist = _haversine_distance(51.5074, -0.1278, 48.8566, 2.3522)
+        assert 330_000 < dist < 350_000
 
-    def test_haversine_distance_known_distance(self):
-        """Test with known distance (London to Paris ≈ 340 km)."""
-        # London: 51.5074, -0.1278
-        # Paris: 48.8566, 2.3522
-        distance = _haversine_distance(51.5074, -0.1278, 48.8566, 2.3522)
-
-        # Should be roughly 340 km = 340000 meters
-        assert 330000 < distance < 350000
-
-    def test_haversine_distance_short_distance(self):
-        """Test with short distance."""
-        # Two points roughly 111 meters apart in London
-        distance = _haversine_distance(
-            51.5074, -0.1278,
-            51.5084, -0.1278,  # ~0.001 degrees of latitude ≈ 111 meters
-        )
-
-        # Should be roughly 111 meters
-        assert 100 < distance < 120
-
-    def test_haversine_distance_invalid_coordinates(self):
-        """Handles invalid coordinates gracefully."""
-        distance = _haversine_distance(None, -0.1278, 51.5074, -0.1278)
-        assert distance == float('inf')
-
-    def test_haversine_distance_invalid_type(self):
-        """Handles non-numeric coordinates gracefully."""
-        distance = _haversine_distance("invalid", -0.1278, 51.5074, -0.1278)
-        assert distance == float('inf')
-
-
-class TestIntegration:
-    """Integration tests combining filtering and duplicate detection."""
-
-    def test_filter_and_detect_together(self):
-        """Can apply filters and duplicate detection in sequence."""
-        photos = [
-            {
-                "id": "1",
-                "aestheticScore": 0.8,
-                "latitude": 51.5074,
-                "longitude": -0.1278,
-                "dateCreated": "2026-04-18T10:30:00Z",
-            },
-            {
-                "id": "2",
-                "aestheticScore": 0.4,
-                "latitude": 51.5074,
-                "longitude": -0.1278,
-                "dateCreated": "2026-04-18T10:30:02Z",
-            },
-            {
-                "id": "3",
-                "aestheticScore": 0.9,
-                "latitude": 51.5074,
-                "longitude": -0.1278,
-                "dateCreated": "2026-04-18T10:30:01Z",
-            },
-        ]
-
-        # First filter by score
-        filtered = filter_by_aesthetic_score(photos, min_score=0.5)
-        assert len(filtered) == 2
-
-        # Then detect duplicates
-        with_dups = detect_duplicates(filtered)
-        assert len(with_dups) == 2
-        assert with_dups[0]["isDuplicate"] is False
-        assert with_dups[1]["isDuplicate"] is True
+    def test_invalid_coordinates_returns_infinity(self):
+        assert _haversine_distance(None, -0.1278, 51.5074, -0.1278) == float("inf")
+        assert _haversine_distance("bad", -0.1278, 51.5074, -0.1278) == float("inf")

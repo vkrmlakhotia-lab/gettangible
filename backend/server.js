@@ -1,157 +1,90 @@
 const express = require('express');
-const { spawn } = require('child_process');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env.local') });
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+
+// PHAsset constants (mirror iOS PHAssetMediaType / PHAssetMediaSubtype)
+const MEDIA_TYPE_VIDEO = 2;
+const SUBTYPE_SCREENSHOT = 1 << 2; // = 4
 
 /**
- * POST /api/import/recent
- * Query params:
- *   - count: number of photos (default 10)
- *   - minAestheticScore: filter threshold (0-1, default 0.5)
- *   - detectDuplicates: boolean (default true)
+ * POST /api/photos/filter
+ *
+ * Accepts photo metadata from the iOS PHAsset picker and returns a filtered
+ * subset. Does NOT receive image files — only metadata objects.
+ *
+ * Body: {
+ *   photos: Array<PHAssetPhoto>,
+ *   options?: {
+ *     includeVideos?: boolean,   // default false
+ *     minMegapixels?: number,    // default 1.0
+ *   }
+ * }
  */
-app.post('/api/import/recent', async (req, res) => {
-  const count = parseInt(req.query.count) || 10;
-  const minAestheticScore = parseFloat(req.query.minAestheticScore) || 0.5;
-  const detectDuplicates = req.query.detectDuplicates !== 'false';
+app.post('/api/photos/filter', (req, res) => {
+  const { photos, options = {} } = req.body;
 
-  try {
-    // Call Python backend
-    const pythonResult = await callPythonExtractor('recent', { count });
-
-    if (!pythonResult.success) {
-      return res.status(500).json({ error: pythonResult.error });
-    }
-
-    // Filter by aesthetic score
-    let photos = pythonResult.photos || [];
-    photos = photos.filter(p => (p.aestheticScore || 0) >= minAestheticScore);
-
-    // Detect duplicates via Python
-    if (detectDuplicates) {
-      const detectResult = await callPythonDuplicateDetection(photos);
-      if (detectResult.success) {
-        photos = detectResult.photos;
-      } else {
-        // Log warning but don't fail the entire request
-        console.warn('Duplicate detection failed:', detectResult.error);
-      }
-    }
-
-    res.json({
-      count: photos.length,
-      photos,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('Import error:', error);
-    res.status(500).json({ error: error.message });
+  if (!Array.isArray(photos)) {
+    return res.status(400).json({ error: 'photos must be an array' });
   }
+
+  const includeVideos = options.includeVideos ?? false;
+  const minMegapixels = options.minMegapixels ?? 1.0;
+
+  let filtered = photos;
+  if (!includeVideos) filtered = filterVideos(filtered);
+  filtered = filterScreenshots(filtered);
+  filtered = filterLowResolution(filtered, minMegapixels);
+  filtered = deduplicateBursts(filtered);
+
+  res.json({
+    total: photos.length,
+    filtered: filtered.length,
+    photos: filtered,
+    timestamp: new Date().toISOString(),
+  });
 });
 
-/**
- * Helper: Call Python extraction script
- */
-function callPythonExtractor(command, options) {
-  return new Promise((resolve) => {
-    const pythonScript = path.join(__dirname, 'main.py');
-    // Build args: global flags first, then subcommand, then subcommand-specific options
-    const args = [pythonScript, '--output-json', command];
-
-    if (options.count) {
-      args.push('--count', String(options.count));
-    }
-
-    const python = spawn('python3', args, { cwd: __dirname });
-    let stdout = '';
-    let stderr = '';
-
-    // Handle spawn errors (e.g., Python not found, permission denied)
-    python.on('error', (err) => {
-      resolve({ success: false, error: `Failed to spawn Python: ${err.message}` });
-    });
-
-    python.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-
-    python.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    python.on('close', (code) => {
-      if (code === 0) {
-        try {
-          const result = JSON.parse(stdout);
-          resolve({ success: true, photos: result });
-        } catch (e) {
-          const errorMsg = stderr || `JSON parse error: ${e.message}`;
-          resolve({ success: false, error: errorMsg });
-        }
-      } else {
-        resolve({ success: false, error: stderr || `Python exited with code ${code}` });
-      }
-    });
-  });
+function filterVideos(photos) {
+  return photos.filter(p => (p.mediaType ?? 1) !== MEDIA_TYPE_VIDEO);
 }
 
-/**
- * Helper: Call Python duplicate detection on photos
- * Spawns a small Python subprocess to run the detect_duplicates function
- */
-function callPythonDuplicateDetection(photos) {
-  return new Promise((resolve) => {
-    const script = path.join(__dirname, 'src', 'filters.py');
-    const pythonCode = `
-import sys
-import json
-sys.path.insert(0, '${__dirname}/src')
-from filters import detect_duplicates
+function filterScreenshots(photos) {
+  return photos.filter(p => !((p.mediaSubtypes ?? 0) & SUBTYPE_SCREENSHOT));
+}
 
-photos_json = json.loads('''${JSON.stringify(photos)}''')
-result = detect_duplicates(photos_json)
-print(json.dumps(result))
-`;
+function filterLowResolution(photos, minMegapixels) {
+  const minPixels = minMegapixels * 1_000_000;
+  return photos.filter(p => ((p.width ?? 0) * (p.height ?? 0)) >= minPixels);
+}
 
-    const python = spawn('python3', ['-c', pythonCode], { cwd: __dirname });
-    let stdout = '';
-    let stderr = '';
+function deduplicateBursts(photos) {
+  const seen = new Map(); // burstIdentifier → index in result
+  const result = [];
 
-    python.on('error', (err) => {
-      resolve({ success: false, error: `Failed to spawn Python: ${err.message}` });
-    });
+  for (const photo of photos) {
+    const burstId = photo.burstIdentifier;
+    if (!burstId) {
+      result.push(photo);
+      continue;
+    }
+    if (!seen.has(burstId)) {
+      seen.set(burstId, result.length);
+      result.push(photo);
+    } else if (photo.isFavorite) {
+      result[seen.get(burstId)] = photo;
+    }
+  }
 
-    python.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-
-    python.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    python.on('close', (code) => {
-      if (code === 0) {
-        try {
-          const result = JSON.parse(stdout);
-          resolve({ success: true, photos: result });
-        } catch (e) {
-          const errorMsg = stderr || `JSON parse error: ${e.message}`;
-          resolve({ success: false, error: errorMsg });
-        }
-      } else {
-        resolve({ success: false, error: stderr || `Python exited with code ${code}` });
-      }
-    });
-  });
+  return result;
 }
 
 app.listen(PORT, () => {
-  console.log(`Apple Photos import server listening on port ${PORT}`);
+  console.log(`Tangible photo filter API on port ${PORT}`);
 });
 
 module.exports = app;

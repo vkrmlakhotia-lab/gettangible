@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { MapPin, Calendar, User, Clock, ChevronRight, Check, ImageIcon, Loader2, Settings } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
 import type { BookPhoto } from '@/types/book'
+import { isScreenshot, isVideo, applyPhotoFilters } from '@/hooks/usePhotoFilter'
 
 // ─── Native camera helpers (iOS only) ────────────────────────────────────────
 
@@ -422,8 +423,8 @@ const ApplePhotosImport = ({ onImport }: Props) => {
     // Show the first two as done (metadata + faces are fast), rest pending
     return (
       <div className="flex flex-col items-center py-8 animate-fade-in">
-        <div className="w-[80px] h-[80px] bg-[#e5f5ff] rounded-[40px] flex items-center justify-center mb-6">
-          <Loader2 size={28} strokeWidth={1.5} className="text-[#007aff] animate-spin" />
+        <div className="w-[80px] h-[80px] bg-[#43aa8b]/10 rounded-[40px] flex items-center justify-center mb-6">
+          <Loader2 size={28} strokeWidth={1.5} className="text-[#43aa8b] animate-spin" />
         </div>
         <p className="text-[18px] font-semibold text-foreground mb-6">Scanning your library…</p>
         <div className="w-full space-y-3 px-2">
@@ -431,7 +432,7 @@ const ApplePhotosImport = ({ onImport }: Props) => {
             const done = i < 2
             return (
               <div key={label} className="flex items-center gap-3">
-                <div className={`w-[22px] h-[22px] rounded-full flex items-center justify-center flex-shrink-0 ${done ? 'bg-[#33bf66]' : 'bg-[#d9d9d9]'}`}>
+                <div className={`w-[22px] h-[22px] rounded-full flex items-center justify-center flex-shrink-0 ${done ? 'bg-[#90be6d]' : 'bg-muted'}`}>
                   {done && <Check size={12} strokeWidth={3} className="text-white" />}
                 </div>
                 <p className={`text-[14px] ${done ? 'text-foreground font-medium' : 'text-[#999]'}`}>{label}</p>
@@ -447,23 +448,16 @@ const ApplePhotosImport = ({ onImport }: Props) => {
   // STEP: Filters / Options (screen 09)
   if (step === 'filters') {
     // Naive heuristic counts based on filename/size — good enough for the UI
-    const screenshotCount = allPhotos.filter(p =>
-      p.file.name.toLowerCase().includes('screenshot') || p.file.size < 50_000
-    ).length
-    const duplicateCount = Math.floor(allPhotos.length * 0.05) // rough 5% estimate
-    const selfieCount = Math.floor(allPhotos.length * 0.12)    // rough 12% estimate
+    const screenshotCount = allPhotos.filter(p => isScreenshot(p)).length
+    const videoCount = allPhotos.filter(p => isVideo(p)).length
+    const selfieCount = Math.floor(allPhotos.length * 0.12) // rough estimate — needs PHAsset for accuracy
 
     const applyFiltersAndContinue = () => {
-      let filtered = [...allPhotos]
-      if (filterScreenshots) {
-        filtered = filtered.filter(p =>
-          !p.file.name.toLowerCase().includes('screenshot') && p.file.size >= 50_000
-        )
-      }
-      if (!includeSelfies) {
-        // Selfies typically have front-camera flag in EXIF — skip for now (no data)
-        // We keep all but note intent via state
-      }
+      let filtered = applyPhotoFilters(allPhotos, {
+        removeScreenshots: filterScreenshots,
+        removeVideos: true,
+        minMegapixels: filterBlurry ? 1.0 : 0,
+      })
 
       // Update clusters with filtered set
       if (category === 'trips') {
@@ -485,16 +479,18 @@ const ApplePhotosImport = ({ onImport }: Props) => {
       }
     }
 
-    const shortlisted = allPhotos.length
-      - (filterScreenshots ? screenshotCount : 0)
-      - (filterDuplicates ? duplicateCount : 0)
+    const shortlisted = applyPhotoFilters(allPhotos, {
+      removeScreenshots: filterScreenshots,
+      removeVideos: true,
+      minMegapixels: filterBlurry ? 1.0 : 0,
+    }).length
 
     type ToggleRow = { label: string; sub: string; value: boolean; set: (v: boolean) => void }
     const rows: ToggleRow[] = [
       { label: 'Remove screenshots', sub: `Detected ${screenshotCount} screenshots`, value: filterScreenshots, set: setFilterScreenshots },
-      { label: 'Remove blurry photos', sub: 'Quality threshold: medium', value: filterBlurry, set: setFilterBlurry },
-      { label: 'Remove near-duplicates', sub: `Detected ${duplicateCount} duplicates`, value: filterDuplicates, set: setFilterDuplicates },
-      { label: 'Include selfies', sub: `${selfieCount} selfies detected`, value: includeSelfies, set: setIncludeSelfies },
+      { label: 'Remove videos', sub: `Detected ${videoCount} videos`, value: true, set: () => {} },
+      { label: 'Remove blurry photos', sub: 'Quality threshold: 1 megapixel minimum', value: filterBlurry, set: setFilterBlurry },
+      { label: 'Include selfies', sub: `~${selfieCount} selfies detected`, value: includeSelfies, set: setIncludeSelfies },
     ]
 
     return (
@@ -512,7 +508,7 @@ const ApplePhotosImport = ({ onImport }: Props) => {
               {/* Toggle */}
               <button
                 onClick={() => row.set(!row.value)}
-                className={`relative w-[50px] h-[28px] rounded-full transition-colors flex-shrink-0 ${row.value ? 'bg-[#2eccb2]' : 'bg-[#d9d9d9]'}`}
+                className={`relative w-[50px] h-[28px] rounded-full transition-colors flex-shrink-0 ${row.value ? 'bg-[#43aa8b]' : 'bg-muted'}`}
               >
                 <div className={`absolute top-[3px] w-[22px] h-[22px] bg-white rounded-full shadow transition-all ${row.value ? 'left-[25px]' : 'left-[3px]'}`} />
               </button>
@@ -521,14 +517,14 @@ const ApplePhotosImport = ({ onImport }: Props) => {
         </div>
 
         {/* Summary banner */}
-        <div className="bg-[#f0faf0] rounded-[12px] px-4 py-3 mt-4">
-          <p className="text-[14px] font-medium text-[#1a8033]">{Math.max(shortlisted, 1)} photos shortlisted for your book</p>
+        <div className="bg-[#90be6d]/10 rounded-[12px] px-4 py-3 mt-4">
+          <p className="text-[14px] font-medium text-[#577590]">{Math.max(shortlisted, 1)} photos shortlisted for your book</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">We'll auto-arrange them — you can edit later</p>
         </div>
 
         <button
           onClick={applyFiltersAndContinue}
-          className="w-full h-12 bg-[#007aff] text-white rounded-xl font-medium text-sm mt-6 hover:opacity-90 transition-opacity"
+          className="w-full h-12 bg-[#f8961e] text-white rounded-xl font-medium text-sm mt-6 hover:opacity-90 transition-opacity"
         >
           Review & Select Photos →
         </button>
@@ -793,7 +789,7 @@ const ApplePhotosImport = ({ onImport }: Props) => {
                           {/* Checkmark badge */}
                           <div className={`absolute top-1.5 right-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
                             isSelected
-                              ? 'bg-[#00C2A8] border-[#00C2A8]'
+                              ? 'bg-[#43aa8b] border-[#43aa8b]'
                               : 'border-white/70 bg-transparent'
                           }`}>
                             {isSelected && <Check size={10} strokeWidth={3} className="text-white" />}
@@ -813,7 +809,7 @@ const ApplePhotosImport = ({ onImport }: Props) => {
           <button
             onClick={handleConfirmSelection}
             disabled={selectedCount === 0}
-            className="w-full h-12 bg-[#00C2A8] text-white rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-30 pointer-events-auto"
+            className="w-full h-12 bg-[#f8961e] text-white rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-30 pointer-events-auto"
           >
             Continue ({selectedCount} Selected)
           </button>
