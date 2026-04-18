@@ -53,8 +53,9 @@ app.post('/api/import/recent', async (req, res) => {
  */
 function callPythonExtractor(command, options) {
   return new Promise((resolve) => {
-    const pythonScript = path.join(__dirname, 'extract_photos.py');
-    const args = [pythonScript, command, '--output-json'];
+    const pythonScript = path.join(__dirname, 'main.py');
+    // Build args: global flags first, then subcommand, then subcommand-specific options
+    const args = [pythonScript, '--output-json', command];
 
     if (options.count) {
       args.push('--count', String(options.count));

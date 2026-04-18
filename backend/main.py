@@ -37,6 +37,11 @@ Examples:
         action="store_true",
         help="Auto-approve without permission prompts (dev/testing only)",
     )
+    parser.add_argument(
+        "--output-json",
+        action="store_true",
+        help="Output results as JSON (for programmatic use)",
+    )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
@@ -65,13 +70,32 @@ Examples:
     try:
         if args.command == "recent":
             logger.info(f"Intaking {args.count} recent photos")
-            copied = workflow.intake_recent_photos(args.count)
-            print(f"\n✓ Successfully copied {len(copied)} photos")
+            result = workflow.intake_recent_photos(args.count)
+
+            if args.output_json:
+                import json
+                # Convert to JSON-serializable format (tuples/objects → dicts)
+                json_result = [
+                    r.to_dict() if hasattr(r, 'to_dict') else r
+                    for r in result
+                ]
+                print(json.dumps(json_result))
+            else:
+                print(f"\n✓ Successfully copied {len(result)} photos")
 
         elif args.command == "album":
             logger.info(f"Intaking album: {args.album_name}")
-            copied = workflow.intake_album(args.album_name)
-            print(f"\n✓ Successfully copied {len(copied)} photos")
+            result = workflow.intake_album(args.album_name)
+
+            if args.output_json:
+                import json
+                json_result = [
+                    r.to_dict() if hasattr(r, 'to_dict') else r
+                    for r in result
+                ]
+                print(json.dumps(json_result))
+            else:
+                print(f"\n✓ Successfully copied {len(result)} photos")
 
         elif args.command == "status":
             stats = workflow.get_status()
