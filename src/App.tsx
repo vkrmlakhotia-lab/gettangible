@@ -30,7 +30,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/onboarding" element={<Onboarding onComplete={() => window.location.replace('/home')} />} />
+              <Route path="/onboarding" element={<Onboarding onComplete={() => window.location.replace('/create')} />} />
               <Route path="/home" element={<HomePage />} />
               <Route path="/create" element={<CreateBook />} />
               <Route path="/editor/:id" element={<Editor />} />

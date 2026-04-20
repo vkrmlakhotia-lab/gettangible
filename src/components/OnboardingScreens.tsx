@@ -165,7 +165,7 @@ const OnboardingScreens = ({ onComplete, initialStep = "curate", onBack }: Onboa
           {/* 3 buttons */}
           <div className="px-6 py-4 space-y-2.5">
             <button
-              onClick={() => setStep("dates")}
+              onClick={() => setStep("analyzing")}
               className="w-full py-3.5 rounded-xl bg-[hsl(var(--tangible-teal))] text-white font-medium text-sm hover:opacity-90 transition-opacity"
             >
               Allow Full Access
