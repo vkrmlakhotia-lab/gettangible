@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBooks } from '@/context/BookContext';
 import { useAuth } from '@/context/AuthContext';
-import { Gift } from 'lucide-react';
 import SignInSheet from '@/components/SignInSheet';
 
 const HomePage = () => {
@@ -51,7 +50,7 @@ const HomePage = () => {
           <p className="text-[14px] text-muted-foreground mt-1">Let's create your first book</p>
 
           {/* Illustration */}
-          <div className="mt-6 mx-8 bg-[#e0f7f5] rounded-[20px] h-[168px] flex flex-col items-center justify-center">
+          <div className="mt-6 mx-8 bg-[#e8f5f2] rounded-[20px] h-[168px] flex flex-col items-center justify-center">
             <span className="text-[52px]">📚</span>
             <p className="text-[14px] text-[#666] mt-2">No books yet</p>
           </div>
@@ -64,8 +63,8 @@ const HomePage = () => {
             'Review, then order — delivered in 5-7 days',
           ].map((text, i) => (
             <div key={i} className="flex items-center gap-3 bg-card rounded-[10px] border border-border px-4 h-[46px] mb-2">
-              <div className="w-[22px] h-[22px] bg-[#e0f7f5] rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-[12px] font-bold text-[#2eccb2]">{i + 1}</span>
+              <div className="w-[22px] h-[22px] bg-[#e8f5f2] rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-[12px] font-bold text-[#43aa8b]">{i + 1}</span>
               </div>
               <p className="text-[13px] text-foreground">{text}</p>
             </div>
@@ -74,10 +73,10 @@ const HomePage = () => {
           {/* Main CTA */}
           <button
             onClick={() => navigate('/create')}
-            className="w-full mt-6 bg-[#2eccb2] rounded-[16px] py-5 flex flex-col items-center hover:opacity-90 transition-opacity"
+            className="w-full mt-6 bg-[#f8961e] rounded-[16px] py-5 flex flex-col items-center hover:opacity-90 transition-opacity"
           >
             <p className="text-[18px] font-semibold text-white">Create My First Book</p>
-            <p className="text-[12px] text-[#b2f2ed] mt-1">Takes about 2 minutes · From £24</p>
+            <p className="text-[12px] text-[#ffd699] mt-1">Takes about 2 minutes · From £24</p>
           </button>
 
           {/* Social proof */}
@@ -121,25 +120,10 @@ const HomePage = () => {
         {/* Create new book CTA */}
         <button
           onClick={() => navigate('/create')}
-          className="w-full mt-4 bg-[#e5f5ff] border-[1.5px] border-[#007aff] rounded-[14px] px-4 py-4 text-left hover:opacity-90 transition-opacity"
+          className="w-full mt-4 bg-[#fef5e7] border-[1.5px] border-[#f8961e] rounded-[14px] px-4 py-4 text-left hover:opacity-90 transition-opacity"
         >
-          <p className="text-[15px] font-semibold text-[#007aff]">+ Create a new book</p>
-          <p className="text-[12px] text-[#007aff]/80 mt-0.5">From your Apple Photos</p>
-        </button>
-
-        {/* Gift a book CTA */}
-        <button
-          onClick={() => navigate('/gift')}
-          className="w-full mt-3 bg-[#f5ebff] border-[1.5px] border-[#8033d9] rounded-[14px] px-4 py-4 flex items-center gap-3 hover:opacity-90 transition-opacity"
-        >
-          <div className="w-8 h-8 bg-[#8033d9] rounded-lg flex items-center justify-center flex-shrink-0">
-            <Gift size={16} strokeWidth={1.5} className="text-white" />
-          </div>
-          <div className="flex-1 text-left">
-            <p className="text-[15px] font-semibold text-[#8033d9]">Gift a book to someone</p>
-            <p className="text-[12px] text-[#804dbf] mt-0.5">From £24 · they just pay shipping</p>
-          </div>
-          <span className="text-[#8033d9] text-lg">→</span>
+          <p className="text-[15px] font-semibold text-[#f8961e]">+ Create a new book</p>
+          <p className="text-[12px] text-[#f8961e]/80 mt-0.5">From your Apple Photos</p>
         </button>
 
         {/* Book list */}
@@ -156,7 +140,7 @@ const HomePage = () => {
                 {project.coverPhoto ? (
                   <img src={project.coverPhoto} alt={project.title} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full bg-[#e0f7f5] flex items-center justify-center">
+                  <div className="w-full h-full bg-[#e8f5f2] flex items-center justify-center">
                     <span className="text-2xl">📷</span>
                   </div>
                 )}
@@ -168,7 +152,7 @@ const HomePage = () => {
                   {project.pages.length} pages · {project.status === 'draft' ? 'Draft' : project.status === 'ordered' ? 'Ordered' : 'Completed'}
                 </p>
                 <div className="mt-2 inline-flex">
-                  <span className="bg-[#e0f7f5] text-[#2eccb2] text-[11px] font-medium px-3 py-0.5 rounded-md">
+                  <span className="bg-[#e8f5f2] text-[#43aa8b] text-[11px] font-medium px-3 py-0.5 rounded-md">
                     {project.status === 'ordered' ? 'View order' : 'Continue'}
                   </span>
                 </div>

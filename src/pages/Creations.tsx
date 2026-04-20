@@ -14,9 +14,9 @@ const STATUS_LABEL: Record<string, string> = {
 
 const STATUS_COLOR: Record<string, string> = {
   draft: 'text-[#999]',
-  completed: 'text-[#007aff]',
-  ordered: 'text-[#ff991a]',
-  archived: 'text-[#33bf66]',
+  completed: 'text-[#90be6d]',
+  ordered: 'text-[#f8961e]',
+  archived: 'text-[#90be6d]',
 };
 
 const Creations = () => {
@@ -55,7 +55,7 @@ const Creations = () => {
             onClick={() => setFilter(tab.key)}
             className={`flex-shrink-0 h-7 px-5 rounded-lg text-[12px] font-medium transition-colors ${
               filter === tab.key
-                ? 'bg-[#007aff] text-white'
+                ? 'bg-[#f8961e] text-white'
                 : 'bg-[#f7f7f7] text-[#666] hover:bg-muted'
             }`}
           >
@@ -85,8 +85,8 @@ const Creations = () => {
                   {project.coverPhoto ? (
                     <img src={project.coverPhoto} alt={project.title} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-[#e0f7f5] flex items-center justify-center">
-                      <BookOpen size={20} strokeWidth={1.2} className="text-[#2eccb2]" />
+                    <div className="w-full h-full bg-[#e8f5f2] flex items-center justify-center">
+                      <BookOpen size={20} strokeWidth={1.2} className="text-[#43aa8b]" />
                     </div>
                   )}
                 </div>
