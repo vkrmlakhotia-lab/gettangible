@@ -174,7 +174,25 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     options?: { style?: BookStyle; paperFinish?: PaperFinish; aiPrompt?: string },
     onProgress?: (uploaded: number, total: number) => void
   ): Promise<BookProject> => {
-    if (!user) throw new Error('Not authenticated')
+    if (!user) {
+      const pages = autoLayout(photos, options?.style)
+      const project: BookProject = {
+        id: crypto.randomUUID(),
+        title,
+        coverPhoto: photos[0]?.url,
+        pages,
+        status: 'draft',
+        paperFinish: options?.paperFinish ?? 'matte',
+        style: options?.style ?? 'classic',
+        aiPrompt: options?.aiPrompt,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        collaborators: [],
+      }
+      setCurrentProjectState(project)
+      setProjects(prev => [...prev, project])
+      return project
+    }
 
     // Upload any local files to Supabase Storage before saving to DB
     const uploadedPhotos = await uploadPhotos(photos, user.id, onProgress)

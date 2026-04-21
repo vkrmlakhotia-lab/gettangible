@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useBooks } from '@/context/BookContext'
-import { useAuth } from '@/context/AuthContext'
 import { ChevronLeft, Loader2 } from 'lucide-react'
 import ApplePhotosImport from '@/components/ApplePhotosImport'
 import type { BookPhoto } from '@/types/book'
@@ -9,13 +8,9 @@ import type { BookPhoto } from '@/types/book'
 const CreateBook = () => {
   const navigate = useNavigate()
   const { createProject } = useBooks()
-  const { isAuthenticated } = useAuth()
   const [creating, setCreating] = useState(false)
   const [progress, setProgress] = useState({ uploaded: 0, total: 0 })
 
-  useEffect(() => {
-    if (!isAuthenticated) navigate('/onboarding')
-  }, [])
 
   const handleImport = async (photos: BookPhoto[]) => {
     if (photos.length === 0) return

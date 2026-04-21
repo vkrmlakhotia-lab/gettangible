@@ -175,7 +175,7 @@ const CategoryCard = ({
 type Step = 'permission' | 'denied' | 'category' | 'uploading' | 'filters' | 'options' | 'selecting'
 
 const ApplePhotosImport = ({ onImport }: Props) => {
-  const [step, setStep] = useState<Step>('permission')
+  const [step, setStep] = useState<Step>('category')
   const [category, setCategory] = useState<Category | null>(null)
   const [allPhotos, setAllPhotos] = useState<RichPhoto[]>([])
   const [analysing, setAnalysing] = useState(false)
